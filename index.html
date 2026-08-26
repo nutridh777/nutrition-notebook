@@ -98,16 +98,58 @@ const { useState, useEffect, useMemo } = React;
 const STORAGE_KEY = "nutrition-notebook-data";
 
 const PRESETS = [
-  { id: "p1", name: "鶏むね肉(皮なし)", unit: "100g", kcal: 108, protein: 22.3, fat: 1.5, carb: 0 },
-  { id: "p2", name: "卵", unit: "1個", kcal: 71, protein: 6.1, fat: 4.7, carb: 1.7 },
-  { id: "p3", name: "納豆", unit: "1パック", kcal: 95, protein: 7.4, fat: 4.5, carb: 5.4 },
-  { id: "p4", name: "白米", unit: "1膳(150g)", kcal: 252, protein: 3.8, fat: 0.5, carb: 55.7 },
-  { id: "p5", name: "木綿豆腐", unit: "1/3丁", kcal: 72, protein: 6.6, fat: 4.2, carb: 1.6 },
-  { id: "p6", name: "鮭", unit: "1切れ", kcal: 99, protein: 17.8, fat: 3.4, carb: 0.1 },
-  { id: "p7", name: "牛乳", unit: "200ml", kcal: 134, protein: 6.6, fat: 7.6, carb: 9.6 },
-  { id: "p8", name: "バナナ", unit: "1本", kcal: 86, protein: 1.1, fat: 0.2, carb: 22.5 },
-  { id: "p9", name: "ブロッコリー", unit: "100g", kcal: 33, protein: 4.3, fat: 0.5, carb: 5.2 },
-  { id: "p10", name: "ホエイプロテイン", unit: "1杯(30g)", kcal: 116, protein: 21, fat: 1.5, carb: 3 },
+  // 主食
+  { id: "p1", category: "主食", name: "白米", unit: "1膳(150g)", kcal: 252, protein: 3.8, fat: 0.5, carb: 55.7 },
+  { id: "p2", category: "主食", name: "玄米ご飯", unit: "1膳(150g)", kcal: 248, protein: 4.2, fat: 1.5, carb: 51.3 },
+  { id: "p3", category: "主食", name: "食パン", unit: "6枚切り1枚", kcal: 158, protein: 5.3, fat: 2.6, carb: 28.0 },
+  { id: "p4", category: "主食", name: "うどん(茹で)", unit: "1玉", kcal: 231, protein: 5.9, fat: 0.9, carb: 48.4 },
+  { id: "p5", category: "主食", name: "そば(茹で)", unit: "1玉", kcal: 264, protein: 9.6, fat: 1.4, carb: 54.0 },
+  { id: "p6", category: "主食", name: "スパゲッティ(茹で)", unit: "100g", kcal: 150, protein: 5.2, fat: 0.9, carb: 28.4 },
+  { id: "p7", category: "主食", name: "おにぎり(具なし)", unit: "1個", kcal: 168, protein: 2.5, fat: 0.3, carb: 37.1 },
+  // 肉・魚
+  { id: "p8", category: "肉・魚", name: "鶏むね肉(皮なし)", unit: "100g", kcal: 108, protein: 22.3, fat: 1.5, carb: 0 },
+  { id: "p9", category: "肉・魚", name: "鶏もも肉(皮つき)", unit: "100g", kcal: 200, protein: 16.6, fat: 14.0, carb: 0 },
+  { id: "p10", category: "肉・魚", name: "鶏ささみ", unit: "100g", kcal: 105, protein: 23.0, fat: 0.8, carb: 0 },
+  { id: "p11", category: "肉・魚", name: "豚ロース", unit: "100g", kcal: 263, protein: 19.3, fat: 19.2, carb: 0.2 },
+  { id: "p12", category: "肉・魚", name: "豚こま切れ肉", unit: "100g", kcal: 221, protein: 18.5, fat: 15.1, carb: 0.1 },
+  { id: "p13", category: "肉・魚", name: "牛もも肉(赤身)", unit: "100g", kcal: 182, protein: 21.2, fat: 10.7, carb: 0.5 },
+  { id: "p14", category: "肉・魚", name: "合いびき肉", unit: "100g", kcal: 224, protein: 17.0, fat: 17.1, carb: 0.2 },
+  { id: "p15", category: "肉・魚", name: "鮭", unit: "1切れ", kcal: 99, protein: 17.8, fat: 3.4, carb: 0.1 },
+  { id: "p16", category: "肉・魚", name: "サバ", unit: "1切れ", kcal: 211, protein: 16.5, fat: 16.5, carb: 0.1 },
+  { id: "p17", category: "肉・魚", name: "マグロ赤身", unit: "100g", kcal: 115, protein: 26.4, fat: 1.4, carb: 0.1 },
+  { id: "p18", category: "肉・魚", name: "エビ", unit: "100g", kcal: 82, protein: 18.4, fat: 0.6, carb: 0.3 },
+  { id: "p19", category: "肉・魚", name: "ツナ缶(水煮)", unit: "1缶(70g)", kcal: 49, protein: 11.3, fat: 0.4, carb: 0 },
+  // 卵・大豆製品
+  { id: "p20", category: "卵・大豆製品", name: "卵", unit: "1個", kcal: 71, protein: 6.1, fat: 4.7, carb: 1.7 },
+  { id: "p21", category: "卵・大豆製品", name: "ゆで卵", unit: "1個", kcal: 76, protein: 6.5, fat: 5.2, carb: 0.2 },
+  { id: "p22", category: "卵・大豆製品", name: "納豆", unit: "1パック", kcal: 95, protein: 7.4, fat: 4.5, carb: 5.4 },
+  { id: "p23", category: "卵・大豆製品", name: "木綿豆腐", unit: "1/3丁", kcal: 72, protein: 6.6, fat: 4.2, carb: 1.6 },
+  { id: "p24", category: "卵・大豆製品", name: "絹ごし豆腐", unit: "1/3丁", kcal: 56, protein: 4.9, fat: 3.0, carb: 2.3 },
+  { id: "p25", category: "卵・大豆製品", name: "厚揚げ", unit: "1/2枚", kcal: 143, protein: 10.7, fat: 11.3, carb: 0.9 },
+  { id: "p26", category: "卵・大豆製品", name: "豆乳(無調整)", unit: "200ml", kcal: 92, protein: 7.2, fat: 4.0, carb: 6.0 },
+  // 野菜
+  { id: "p27", category: "野菜", name: "ブロッコリー", unit: "100g", kcal: 33, protein: 4.3, fat: 0.5, carb: 5.2 },
+  { id: "p28", category: "野菜", name: "トマト", unit: "1個", kcal: 30, protein: 1.1, fat: 0.2, carb: 6.9 },
+  { id: "p29", category: "野菜", name: "キャベツ", unit: "100g", kcal: 21, protein: 1.3, fat: 0.2, carb: 4.7 },
+  { id: "p30", category: "野菜", name: "ほうれん草(茹で)", unit: "100g", kcal: 23, protein: 2.6, fat: 0.5, carb: 2.4 },
+  { id: "p31", category: "野菜", name: "もやし", unit: "100g", kcal: 14, protein: 1.7, fat: 0.1, carb: 1.3 },
+  { id: "p32", category: "野菜", name: "きゅうり", unit: "1本", kcal: 13, protein: 1.0, fat: 0.1, carb: 2.0 },
+  { id: "p33", category: "野菜", name: "じゃがいも", unit: "1個", kcal: 59, protein: 1.3, fat: 0.1, carb: 13.9 },
+  { id: "p34", category: "野菜", name: "さつまいも", unit: "100g", kcal: 126, protein: 0.9, fat: 0.1, carb: 29.7 },
+  // 乳製品
+  { id: "p35", category: "乳製品", name: "牛乳", unit: "200ml", kcal: 134, protein: 6.6, fat: 7.6, carb: 9.6 },
+  { id: "p36", category: "乳製品", name: "ヨーグルト(無糖)", unit: "100g", kcal: 56, protein: 3.6, fat: 3.0, carb: 4.9 },
+  { id: "p37", category: "乳製品", name: "プロセスチーズ", unit: "1個(18g)", kcal: 63, protein: 4.1, fat: 5.2, carb: 0.2 },
+  { id: "p38", category: "乳製品", name: "カッテージチーズ", unit: "100g", kcal: 99, protein: 13.3, fat: 4.5, carb: 1.9 },
+  // 果物
+  { id: "p39", category: "果物", name: "バナナ", unit: "1本", kcal: 86, protein: 1.1, fat: 0.2, carb: 22.5 },
+  { id: "p40", category: "果物", name: "りんご", unit: "1個", kcal: 88, protein: 0.3, fat: 0.2, carb: 23.8 },
+  { id: "p41", category: "果物", name: "みかん", unit: "1個", kcal: 32, protein: 0.5, fat: 0.1, carb: 8.1 },
+  { id: "p42", category: "果物", name: "キウイ", unit: "1個", kcal: 43, protein: 0.7, fat: 0.1, carb: 11.2 },
+  // 飲料・その他
+  { id: "p43", category: "飲料・その他", name: "ホエイプロテイン", unit: "1杯(30g)", kcal: 116, protein: 21, fat: 1.5, carb: 3 },
+  { id: "p44", category: "飲料・その他", name: "味噌汁(具なし)", unit: "1杯", kcal: 33, protein: 2.1, fat: 1.0, carb: 3.7 },
+  { id: "p45", category: "飲料・その他", name: "オレンジジュース(果汁100%)", unit: "200ml", kcal: 84, protein: 1.4, fat: 0.2, carb: 21.0 },
 ];
 
 const INGREDIENTS = [
@@ -425,7 +467,16 @@ function App() {
         {mode === "preset" ? (
           <div className="form-row">
             <select value={selectedPreset} onChange={e => setSelectedPreset(e.target.value)} style={{ flex: 1, minWidth: 160 }}>
-              <optgroup label="基本の食品">{PRESETS.map(p => <option key={p.id} value={p.id}>{p.name}（{p.unit}）</option>)}</optgroup>
+              {Object.entries(
+                PRESETS.reduce((acc, p) => {
+                  (acc[p.category || "その他"] = acc[p.category || "その他"] || []).push(p);
+                  return acc;
+                }, {})
+              ).map(([category, items]) => (
+                <optgroup label={category} key={category}>
+                  {items.map(p => <option key={p.id} value={p.id}>{p.name}（{p.unit}）</option>)}
+                </optgroup>
+              ))}
               {customPresets.length > 0 && <optgroup label="自分の料理">{customPresets.map(p => <option key={p.id} value={p.id}>{p.name}（{p.unit}）</option>)}</optgroup>}
             </select>
             <input type="number" min="0.5" step="0.5" value={servings} onChange={e => setServings(e.target.value)} style={{ width: 60 }} />
