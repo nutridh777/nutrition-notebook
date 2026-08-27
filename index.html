@@ -237,6 +237,14 @@ function App() {
   const allPresets = [...PRESETS, ...customPresets];
 
   const composerTotals = useMemo(() => rows.reduce((acc, row) => {
+    if (row.ingredientId === "custom") {
+      return {
+        kcal: acc.kcal + (Number(row.customKcal) || 0),
+        protein: acc.protein + (Number(row.customProtein) || 0),
+        fat: acc.fat + (Number(row.customFat) || 0),
+        carb: acc.carb + (Number(row.customCarb) || 0),
+      };
+    }
     const ing = INGREDIENTS.find(i => i.id === row.ingredientId);
     const factor = (Number(row.grams) || 0) / 100;
     if (!ing) return acc;
@@ -250,12 +258,15 @@ function App() {
       d.setDate(d.getDate() - i);
       const key = todayKey(d);
       const list = (data.entries && data.entries[key]) || [];
-      const sums = list.reduce((acc, e) => ({ protein: acc.protein + e.protein, fat: acc.fat + e.fat, carb: acc.carb + e.carb }), { protein: 0, fat: 0, carb: 0 });
+      const sums = list.reduce((acc, e) => ({ kcal: acc.kcal + e.kcal, protein: acc.protein + e.protein, fat: acc.fat + e.fat, carb: acc.carb + e.carb }), { kcal: 0, protein: 0, fat: 0, carb: 0 });
       days.push({ date: fmtLabel(key), ...sums });
     }
     return days;
   }, [data]);
   const maxDay = Math.max(1, ...last7.map(d => d.protein + d.fat + d.carb));
+  const weeklyTotal = useMemo(() => last7.reduce((acc, d) => ({
+    kcal: acc.kcal + d.kcal, protein: acc.protein + d.protein, fat: acc.fat + d.fat, carb: acc.carb + d.carb,
+  }), { kcal: 0, protein: 0, fat: 0, carb: 0 }), [last7]);
 
   function addRow() { setRows([...rows, { id: uid(), ingredientId: INGREDIENTS[0].id, grams: 100 }]); }
   function updateRow(id, field, value) { setRows(rows.map(r => r.id === id ? { ...r, [field]: value } : r)); }
@@ -562,16 +573,41 @@ function App() {
         <button className="settings-toggle" onClick={() => setComposerOpen(s => !s)}>📝 オリジナル料理を登録する</button>
         {composerOpen && (
           <div style={{ marginTop: 14 }}>
-            <p style={{ fontSize: 11.5, color: "var(--ink-soft)", margin: "0 0 10px" }}>材料とグラム数を入れると自動で合計し、いつもの料理として保存できます。</p>
+            <p style={{ fontSize: 11.5, color: "var(--ink-soft)", margin: "0 0 10px" }}>材料とグラム数を入れると自動で合計し、いつもの料理として保存できます。リストにない材料は「手入力する」から栄養成分を直接入力できます。</p>
             <input type="text" placeholder="料理名" value={dishName} onChange={e => setDishName(e.target.value)} style={{ width: "100%", marginBottom: 10 }} />
             {rows.map(row => (
-              <div className="form-row" key={row.id}>
-                <select value={row.ingredientId} onChange={e => updateRow(row.id, "ingredientId", e.target.value)} style={{ flex: 1, minWidth: 130 }}>
-                  {INGREDIENTS.map(ing => <option key={ing.id} value={ing.id}>{ing.name}</option>)}
-                </select>
-                <input type="number" value={row.grams} onChange={e => updateRow(row.id, "grams", e.target.value)} style={{ width: 70 }} />
-                <span style={{ fontSize: 12.5, color: "var(--ink-soft)" }}>g</span>
-                <button className="del-btn" onClick={() => removeRow(row.id)}>✕</button>
+              <div key={row.id} style={{ marginBottom: 8 }}>
+                <div className="form-row" style={{ marginBottom: row.ingredientId === "custom" ? 6 : 0 }}>
+                  <select value={row.ingredientId} onChange={e => updateRow(row.id, "ingredientId", e.target.value)} style={{ flex: 1, minWidth: 130 }}>
+                    {INGREDIENTS.map(ing => <option key={ing.id} value={ing.id}>{ing.name}</option>)}
+                    <option value="custom">✏️ 手入力する</option>
+                  </select>
+                  {row.ingredientId !== "custom" && (
+                    <React.Fragment>
+                      <input type="number" value={row.grams} onChange={e => updateRow(row.id, "grams", e.target.value)} style={{ width: 70 }} />
+                      <span style={{ fontSize: 12.5, color: "var(--ink-soft)" }}>g</span>
+                    </React.Fragment>
+                  )}
+                  <button className="del-btn" onClick={() => removeRow(row.id)}>✕</button>
+                </div>
+                {row.ingredientId === "custom" && (
+                  <div style={{ paddingLeft: 2 }}>
+                    <input
+                      type="text"
+                      placeholder="材料名"
+                      value={row.customName || ""}
+                      onChange={e => updateRow(row.id, "customName", e.target.value)}
+                      style={{ width: "100%", marginBottom: 6 }}
+                    />
+                    <div className="form-grid">
+                      <input type="number" placeholder="カロリー(kcal)" value={row.customKcal || ""} onChange={e => updateRow(row.id, "customKcal", e.target.value)} />
+                      <input type="number" placeholder="たんぱく質(g)" value={row.customProtein || ""} onChange={e => updateRow(row.id, "customProtein", e.target.value)} />
+                      <input type="number" placeholder="脂質(g)" value={row.customFat || ""} onChange={e => updateRow(row.id, "customFat", e.target.value)} />
+                      <input type="number" placeholder="炭水化物(g)" value={row.customCarb || ""} onChange={e => updateRow(row.id, "customCarb", e.target.value)} />
+                    </div>
+                    <p style={{ fontSize: 11, color: "var(--ink-soft)", margin: "4px 0 0" }}>※実際に使った分量ぶんの栄養成分を入力してください（100gあたりではありません）</p>
+                  </div>
+                )}
               </div>
             ))}
             <button className="tab-btn" onClick={addRow}>＋ 材料を追加</button>
@@ -632,6 +668,15 @@ function App() {
               </div>
             );
           })}
+        </div>
+        <div className="composer-total" style={{ background: "#E3DCC8" }}>
+          <div style={{ marginBottom: 4 }}>合計摂取量（過去7日間）：{Math.round(weeklyTotal.kcal)}kcal</div>
+          <div style={{ fontWeight: 400, fontSize: 12.5 }}>
+            たんぱく質 {Math.round(weeklyTotal.protein * 10) / 10}g ・ 脂質 {Math.round(weeklyTotal.fat * 10) / 10}g ・ 炭水化物 {Math.round(weeklyTotal.carb * 10) / 10}g
+          </div>
+          <div style={{ fontWeight: 400, fontSize: 11, color: "var(--ink-soft)", marginTop: 4 }}>
+            1日平均：{Math.round(weeklyTotal.kcal / 7)}kcal ／ P{Math.round((weeklyTotal.protein / 7) * 10) / 10}g ・ F{Math.round((weeklyTotal.fat / 7) * 10) / 10}g ・ C{Math.round((weeklyTotal.carb / 7) * 10) / 10}g
+          </div>
         </div>
         {saveError && <p style={{ fontSize: 11, color: "#9B4A3D", marginTop: 8 }}>端末への保存に失敗しました。ブラウザのプライベートモードなどをご確認ください。</p>}
       </div>
