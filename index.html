@@ -98,58 +98,9 @@ const { useState, useEffect, useMemo } = React;
 const STORAGE_KEY = "nutrition-notebook-data";
 
 const PRESETS = [
-  // 主食
-  { id: "p1", category: "主食", name: "白米", unit: "1膳(150g)", kcal: 252, protein: 3.8, fat: 0.5, carb: 55.7 },
-  { id: "p2", category: "主食", name: "玄米ご飯", unit: "1膳(150g)", kcal: 248, protein: 4.2, fat: 1.5, carb: 51.3 },
-  { id: "p3", category: "主食", name: "食パン", unit: "6枚切り1枚", kcal: 158, protein: 5.3, fat: 2.6, carb: 28.0 },
-  { id: "p4", category: "主食", name: "うどん(茹で)", unit: "1玉", kcal: 231, protein: 5.9, fat: 0.9, carb: 48.4 },
-  { id: "p5", category: "主食", name: "そば(茹で)", unit: "1玉", kcal: 264, protein: 9.6, fat: 1.4, carb: 54.0 },
-  { id: "p6", category: "主食", name: "スパゲッティ(茹で)", unit: "100g", kcal: 150, protein: 5.2, fat: 0.9, carb: 28.4 },
-  { id: "p7", category: "主食", name: "おにぎり(具なし)", unit: "1個", kcal: 168, protein: 2.5, fat: 0.3, carb: 37.1 },
-  // 肉・魚
-  { id: "p8", category: "肉・魚", name: "鶏むね肉(皮なし)", unit: "100g", kcal: 108, protein: 22.3, fat: 1.5, carb: 0 },
-  { id: "p9", category: "肉・魚", name: "鶏もも肉(皮つき)", unit: "100g", kcal: 200, protein: 16.6, fat: 14.0, carb: 0 },
-  { id: "p10", category: "肉・魚", name: "鶏ささみ", unit: "100g", kcal: 105, protein: 23.0, fat: 0.8, carb: 0 },
-  { id: "p11", category: "肉・魚", name: "豚ロース", unit: "100g", kcal: 263, protein: 19.3, fat: 19.2, carb: 0.2 },
-  { id: "p12", category: "肉・魚", name: "豚こま切れ肉", unit: "100g", kcal: 221, protein: 18.5, fat: 15.1, carb: 0.1 },
-  { id: "p13", category: "肉・魚", name: "牛もも肉(赤身)", unit: "100g", kcal: 182, protein: 21.2, fat: 10.7, carb: 0.5 },
-  { id: "p14", category: "肉・魚", name: "合いびき肉", unit: "100g", kcal: 224, protein: 17.0, fat: 17.1, carb: 0.2 },
-  { id: "p15", category: "肉・魚", name: "鮭", unit: "1切れ", kcal: 99, protein: 17.8, fat: 3.4, carb: 0.1 },
-  { id: "p16", category: "肉・魚", name: "サバ", unit: "1切れ", kcal: 211, protein: 16.5, fat: 16.5, carb: 0.1 },
-  { id: "p17", category: "肉・魚", name: "マグロ赤身", unit: "100g", kcal: 115, protein: 26.4, fat: 1.4, carb: 0.1 },
-  { id: "p18", category: "肉・魚", name: "エビ", unit: "100g", kcal: 82, protein: 18.4, fat: 0.6, carb: 0.3 },
-  { id: "p19", category: "肉・魚", name: "ツナ缶(水煮)", unit: "1缶(70g)", kcal: 49, protein: 11.3, fat: 0.4, carb: 0 },
-  // 卵・大豆製品
-  { id: "p20", category: "卵・大豆製品", name: "卵", unit: "1個", kcal: 71, protein: 6.1, fat: 4.7, carb: 1.7 },
-  { id: "p21", category: "卵・大豆製品", name: "ゆで卵", unit: "1個", kcal: 76, protein: 6.5, fat: 5.2, carb: 0.2 },
-  { id: "p22", category: "卵・大豆製品", name: "納豆", unit: "1パック", kcal: 95, protein: 7.4, fat: 4.5, carb: 5.4 },
-  { id: "p23", category: "卵・大豆製品", name: "木綿豆腐", unit: "1/3丁", kcal: 72, protein: 6.6, fat: 4.2, carb: 1.6 },
-  { id: "p24", category: "卵・大豆製品", name: "絹ごし豆腐", unit: "1/3丁", kcal: 56, protein: 4.9, fat: 3.0, carb: 2.3 },
-  { id: "p25", category: "卵・大豆製品", name: "厚揚げ", unit: "1/2枚", kcal: 143, protein: 10.7, fat: 11.3, carb: 0.9 },
-  { id: "p26", category: "卵・大豆製品", name: "豆乳(無調整)", unit: "200ml", kcal: 92, protein: 7.2, fat: 4.0, carb: 6.0 },
-  // 野菜
-  { id: "p27", category: "野菜", name: "ブロッコリー", unit: "100g", kcal: 33, protein: 4.3, fat: 0.5, carb: 5.2 },
-  { id: "p28", category: "野菜", name: "トマト", unit: "1個", kcal: 30, protein: 1.1, fat: 0.2, carb: 6.9 },
-  { id: "p29", category: "野菜", name: "キャベツ", unit: "100g", kcal: 21, protein: 1.3, fat: 0.2, carb: 4.7 },
-  { id: "p30", category: "野菜", name: "ほうれん草(茹で)", unit: "100g", kcal: 23, protein: 2.6, fat: 0.5, carb: 2.4 },
-  { id: "p31", category: "野菜", name: "もやし", unit: "100g", kcal: 14, protein: 1.7, fat: 0.1, carb: 1.3 },
-  { id: "p32", category: "野菜", name: "きゅうり", unit: "1本", kcal: 13, protein: 1.0, fat: 0.1, carb: 2.0 },
-  { id: "p33", category: "野菜", name: "じゃがいも", unit: "1個", kcal: 59, protein: 1.3, fat: 0.1, carb: 13.9 },
-  { id: "p34", category: "野菜", name: "さつまいも", unit: "100g", kcal: 126, protein: 0.9, fat: 0.1, carb: 29.7 },
-  // 乳製品
-  { id: "p35", category: "乳製品", name: "牛乳", unit: "200ml", kcal: 134, protein: 6.6, fat: 7.6, carb: 9.6 },
-  { id: "p36", category: "乳製品", name: "ヨーグルト(無糖)", unit: "100g", kcal: 56, protein: 3.6, fat: 3.0, carb: 4.9 },
-  { id: "p37", category: "乳製品", name: "プロセスチーズ", unit: "1個(18g)", kcal: 63, protein: 4.1, fat: 5.2, carb: 0.2 },
-  { id: "p38", category: "乳製品", name: "カッテージチーズ", unit: "100g", kcal: 99, protein: 13.3, fat: 4.5, carb: 1.9 },
-  // 果物
-  { id: "p39", category: "果物", name: "バナナ", unit: "1本", kcal: 86, protein: 1.1, fat: 0.2, carb: 22.5 },
-  { id: "p40", category: "果物", name: "りんご", unit: "1個", kcal: 88, protein: 0.3, fat: 0.2, carb: 23.8 },
-  { id: "p41", category: "果物", name: "みかん", unit: "1個", kcal: 32, protein: 0.5, fat: 0.1, carb: 8.1 },
-  { id: "p42", category: "果物", name: "キウイ", unit: "1個", kcal: 43, protein: 0.7, fat: 0.1, carb: 11.2 },
-  // 飲料・その他
-  { id: "p43", category: "飲料・その他", name: "ホエイプロテイン", unit: "1杯(30g)", kcal: 116, protein: 21, fat: 1.5, carb: 3 },
-  { id: "p44", category: "飲料・その他", name: "味噌汁(具なし)", unit: "1杯", kcal: 33, protein: 2.1, fat: 1.0, carb: 3.7 },
-  { id: "p45", category: "飲料・その他", name: "オレンジジュース(果汁100%)", unit: "200ml", kcal: 84, protein: 1.4, fat: 0.2, carb: 21.0 },
+  // ここは食事を記録する「リストから選ぶ」の初期候補です。
+  // 今は空にしてあります。「オリジナル料理を登録する」から料理を登録すると、
+  // それが自動的に「自分の料理」として選択肢に反映されます。
 ];
 
 const INGREDIENTS = [
@@ -192,7 +143,7 @@ function loadData() {
     const raw = localStorage.getItem(STORAGE_KEY);
     if (raw) return JSON.parse(raw);
   } catch (e) {}
-  return { entries: {}, targets: DEFAULT_TARGETS, customPresets: [], barcodeProducts: {} };
+  return { entries: {}, targets: DEFAULT_TARGETS, customPresets: [], barcodeProducts: {}, customIngredients: [] };
 }
 
 function App() {
@@ -200,7 +151,7 @@ function App() {
   const [saveError, setSaveError] = useState(false);
   const [selectedDate, setSelectedDate] = useState(todayKey());
   const [mode, setMode] = useState("preset");
-  const [selectedPreset, setSelectedPreset] = useState(PRESETS[0].id);
+  const [selectedPreset, setSelectedPreset] = useState((data.customPresets && data.customPresets[0] && data.customPresets[0].id) || "");
   const [servings, setServings] = useState(1);
   const [manual, setManual] = useState({ name: "", kcal: "", protein: "", fat: "", carb: "" });
   const [settingsOpen, setSettingsOpen] = useState(false);
@@ -208,6 +159,8 @@ function App() {
   const [composerOpen, setComposerOpen] = useState(false);
   const [dishName, setDishName] = useState("");
   const [rows, setRows] = useState([{ id: uid(), ingredientId: INGREDIENTS[0].id, grams: 100 }]);
+  const [newIngredientOpen, setNewIngredientOpen] = useState(false);
+  const [newIngredient, setNewIngredient] = useState({ name: "", kcal: "", protein: "", fat: "", carb: "" });
   const [backupMsg, setBackupMsg] = useState(null);
   const [scanOpen, setScanOpen] = useState(false);
   const [scanning, setScanning] = useState(false);
@@ -233,8 +186,10 @@ function App() {
 
   const targets = data.targets || DEFAULT_TARGETS;
   const customPresets = data.customPresets || [];
+  const customIngredients = data.customIngredients || [];
+  const allIngredients = [...INGREDIENTS, ...customIngredients];
   const barcodeProducts = data.barcodeProducts || {};
-  const allPresets = [...PRESETS, ...customPresets];
+  const allPresets = [...PRESETS, ...customPresets]; // PRESETSは空なので実質customPresetsのみ
 
   const composerTotals = useMemo(() => rows.reduce((acc, row) => {
     if (row.ingredientId === "custom") {
@@ -245,11 +200,11 @@ function App() {
         carb: acc.carb + (Number(row.customCarb) || 0),
       };
     }
-    const ing = INGREDIENTS.find(i => i.id === row.ingredientId);
+    const ing = allIngredients.find(i => i.id === row.ingredientId);
     const factor = (Number(row.grams) || 0) / 100;
     if (!ing) return acc;
     return { kcal: acc.kcal + ing.kcal * factor, protein: acc.protein + ing.protein * factor, fat: acc.fat + ing.fat * factor, carb: acc.carb + ing.carb * factor };
-  }, { kcal: 0, protein: 0, fat: 0, carb: 0 }), [rows]);
+  }, { kcal: 0, protein: 0, fat: 0, carb: 0 }), [rows, allIngredients]);
 
   const last7 = useMemo(() => {
     const days = [];
@@ -283,7 +238,27 @@ function App() {
   }
   function deleteCustomPreset(id) {
     persist({ ...data, customPresets: customPresets.filter(p => p.id !== id) });
-    if (selectedPreset === id) setSelectedPreset(PRESETS[0].id);
+    if (selectedPreset === id) setSelectedPreset((customPresets.find(p => p.id !== id) || {}).id || "");
+  }
+
+  function saveCustomIngredient() {
+    if (!newIngredient.name.trim()) return;
+    const ing = {
+      id: uid(),
+      name: newIngredient.name.trim(),
+      kcal: Number(newIngredient.kcal) || 0,
+      protein: Number(newIngredient.protein) || 0,
+      fat: Number(newIngredient.fat) || 0,
+      carb: Number(newIngredient.carb) || 0,
+    };
+    persist({ ...data, customIngredients: [...customIngredients, ing] });
+    setNewIngredient({ name: "", kcal: "", protein: "", fat: "", carb: "" });
+    setNewIngredientOpen(false);
+  }
+
+  function deleteCustomIngredient(id) {
+    persist({ ...data, customIngredients: customIngredients.filter(i => i.id !== id) });
+    setRows(rows.map(r => r.ingredientId === id ? { ...r, ingredientId: INGREDIENTS[0].id } : r));
   }
   function addEntry(entry) {
     const nextEntries = { ...data.entries };
@@ -411,6 +386,8 @@ function App() {
           entries: parsed.entries || {},
           targets: parsed.targets || DEFAULT_TARGETS,
           customPresets: parsed.customPresets || [],
+          barcodeProducts: parsed.barcodeProducts || {},
+          customIngredients: parsed.customIngredients || [],
         };
         persist(next);
         setTargetsDraft(next.targets);
@@ -476,24 +453,18 @@ function App() {
           <button className={`tab-btn ${mode === "manual" ? "active" : ""}`} onClick={() => setMode("manual")}>手入力する</button>
         </div>
         {mode === "preset" ? (
-          <div className="form-row">
-            <select value={selectedPreset} onChange={e => setSelectedPreset(e.target.value)} style={{ flex: 1, minWidth: 160 }}>
-              {Object.entries(
-                PRESETS.reduce((acc, p) => {
-                  (acc[p.category || "その他"] = acc[p.category || "その他"] || []).push(p);
-                  return acc;
-                }, {})
-              ).map(([category, items]) => (
-                <optgroup label={category} key={category}>
-                  {items.map(p => <option key={p.id} value={p.id}>{p.name}（{p.unit}）</option>)}
-                </optgroup>
-              ))}
-              {customPresets.length > 0 && <optgroup label="自分の料理">{customPresets.map(p => <option key={p.id} value={p.id}>{p.name}（{p.unit}）</option>)}</optgroup>}
-            </select>
-            <input type="number" min="0.5" step="0.5" value={servings} onChange={e => setServings(e.target.value)} style={{ width: 60 }} />
-            <span style={{ fontSize: 12.5, color: "var(--ink-soft)" }}>人前</span>
-            <button className="add-btn" style={{ marginTop: 0 }} onClick={handleAddPreset}>＋ 追加</button>
-          </div>
+          customPresets.length === 0 ? (
+            <p className="empty-note">まだ登録された料理がありません。「📝 オリジナル料理を登録する」から料理を登録すると、ここに自動で表示されます。</p>
+          ) : (
+            <div className="form-row">
+              <select value={selectedPreset} onChange={e => setSelectedPreset(e.target.value)} style={{ flex: 1, minWidth: 160 }}>
+                {customPresets.map(p => <option key={p.id} value={p.id}>{p.name}（{p.unit}）</option>)}
+              </select>
+              <input type="number" min="0.5" step="0.5" value={servings} onChange={e => setServings(e.target.value)} style={{ width: 60 }} />
+              <span style={{ fontSize: 12.5, color: "var(--ink-soft)" }}>人前</span>
+              <button className="add-btn" style={{ marginTop: 0 }} onClick={handleAddPreset}>＋ 追加</button>
+            </div>
+          )
         ) : (
           <div>
             <input type="text" placeholder="食品名" value={manual.name} onChange={e => setManual({ ...manual, name: e.target.value })} style={{ width: "100%" }} />
@@ -579,7 +550,7 @@ function App() {
               <div key={row.id} style={{ marginBottom: 8 }}>
                 <div className="form-row" style={{ marginBottom: row.ingredientId === "custom" ? 6 : 0 }}>
                   <select value={row.ingredientId} onChange={e => updateRow(row.id, "ingredientId", e.target.value)} style={{ flex: 1, minWidth: 130 }}>
-                    {INGREDIENTS.map(ing => <option key={ing.id} value={ing.id}>{ing.name}</option>)}
+                    {allIngredients.map(ing => <option key={ing.id} value={ing.id}>{ing.name}</option>)}
                     <option value="custom">✏️ 手入力する</option>
                   </select>
                   {row.ingredientId !== "custom" && (
@@ -611,6 +582,46 @@ function App() {
               </div>
             ))}
             <button className="tab-btn" onClick={addRow}>＋ 材料を追加</button>
+
+            <div style={{ marginTop: 10 }}>
+              <button className="settings-toggle" style={{ fontSize: 12.5 }} onClick={() => setNewIngredientOpen(s => !s)}>
+                🧺 選択肢に無い材料をリストに追加する
+              </button>
+              {newIngredientOpen && (
+                <div style={{ marginTop: 8, padding: 10, background: "#fff", border: "1px solid var(--line)", borderRadius: 8 }}>
+                  <input
+                    type="text"
+                    placeholder="材料名"
+                    value={newIngredient.name}
+                    onChange={e => setNewIngredient({ ...newIngredient, name: e.target.value })}
+                    style={{ width: "100%", marginBottom: 6 }}
+                  />
+                  <div className="form-grid">
+                    <input type="number" placeholder="カロリー(kcal/100g)" value={newIngredient.kcal} onChange={e => setNewIngredient({ ...newIngredient, kcal: e.target.value })} />
+                    <input type="number" placeholder="たんぱく質(g/100g)" value={newIngredient.protein} onChange={e => setNewIngredient({ ...newIngredient, protein: e.target.value })} />
+                    <input type="number" placeholder="脂質(g/100g)" value={newIngredient.fat} onChange={e => setNewIngredient({ ...newIngredient, fat: e.target.value })} />
+                    <input type="number" placeholder="炭水化物(g/100g)" value={newIngredient.carb} onChange={e => setNewIngredient({ ...newIngredient, carb: e.target.value })} />
+                  </div>
+                  <p style={{ fontSize: 11, color: "var(--ink-soft)", margin: "4px 0 0" }}>※100gあたりの栄養成分を入力してください。登録後は材料の選択肢に追加され、グラム数を入れるだけで使えるようになります。</p>
+                  <button className="add-btn" onClick={saveCustomIngredient}>＋ この材料をリストに追加</button>
+                </div>
+              )}
+              {customIngredients.length > 0 && (
+                <div style={{ marginTop: 10 }}>
+                  <p style={{ fontSize: 11.5, color: "var(--ink-soft)", margin: "0 0 6px" }}>追加した材料</p>
+                  {customIngredients.map(ing => (
+                    <div className="entry-row" key={ing.id}>
+                      <div style={{ flex: 1 }}>
+                        <div className="entry-name">{ing.name}</div>
+                        <div className="entry-macro">100gあたり {ing.kcal}kcal ／ P{ing.protein}g ・ F{ing.fat}g ・ C{ing.carb}g</div>
+                      </div>
+                      <button className="del-btn" onClick={() => deleteCustomIngredient(ing.id)}>✕</button>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+
             <div className="composer-total">合計：{Math.round(composerTotals.kcal)}kcal ／ P{Math.round(composerTotals.protein * 10) / 10}g ・ F{Math.round(composerTotals.fat * 10) / 10}g ・ C{Math.round(composerTotals.carb * 10) / 10}g</div>
             <button className="add-btn" onClick={saveCustomPreset}>＋ この料理をリストに保存</button>
             {customPresets.length > 0 && (
