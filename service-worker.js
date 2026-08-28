@@ -1,7 +1,7 @@
 // バージョン番号を上げると、古いキャッシュが自動的に破棄され、
 // 次回起動時に新しいファイルへ切り替わります。
 // ファイルを更新したときは、この数字を1つ増やしてください（v1 → v2 など）。
-const CACHE_VERSION = "v7";
+const CACHE_VERSION = "v8";
 const CACHE_NAME = `nutrition-notebook-${CACHE_VERSION}`;
 
 const APP_FILES = [
@@ -31,19 +31,30 @@ self.addEventListener("activate", (event) => {
   self.clients.claim();
 });
 
-// キャッシュ優先、なければネットワークから取得（オフライン対応の要）
+// 今のバージョンのキャッシュだけを見る（古いキャッシュの削除が中断されても
+// 誤って古い内容を返さないようにするため）。無ければネットワークから取得する。
 self.addEventListener("fetch", (event) => {
   event.respondWith(
-    caches.match(event.request).then((cached) => {
-      return (
-        cached ||
-        fetch(event.request).catch(() => {
-          // オフラインかつキャッシュにも無い場合は index.html を返す
-          if (event.request.mode === "navigate") {
-            return caches.match("./index.html");
-          }
-        })
-      );
-    })
+    caches.open(CACHE_NAME).then((cache) =>
+      cache.match(event.request).then((cached) => {
+        return (
+          cached ||
+          fetch(event.request)
+            .then((response) => {
+              // ネットワークから取れたら今のバージョンのキャッシュにも保存しておく
+              if (response && response.ok && event.request.method === "GET") {
+                cache.put(event.request, response.clone());
+              }
+              return response;
+            })
+            .catch(() => {
+              // オフラインかつキャッシュにも無い場合は index.html を返す
+              if (event.request.mode === "navigate") {
+                return cache.match("./index.html");
+              }
+            })
+        );
+      })
+    )
   );
 });
