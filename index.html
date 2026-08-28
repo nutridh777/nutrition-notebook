@@ -78,6 +78,14 @@
   .backup-msg.ok { color: var(--protein); }
   .backup-msg.err { color: #9B4A3D; }
   .backup-note { font-size: 11.5px; color: var(--ink-soft); margin: 0 0 12px; }
+  .kana-grid { display: flex; flex-direction: column; gap: 6px; margin-bottom: 4px; }
+  .kana-row { display: flex; gap: 6px; }
+  .kana-btn { flex: 1; aspect-ratio: 1; min-width: 0; display: flex; align-items: center; justify-content: center; border: 1px solid var(--line); background: #fff; border-radius: 8px; font-size: 15px; color: var(--ink); cursor: pointer; }
+  .kana-btn.placeholder { visibility: hidden; cursor: default; }
+  .kana-btn.active { background: var(--indigo); color: #F6F2E8; border-color: var(--indigo); }
+  .kana-result-btn { display: block; width: 100%; text-align: left; padding: 9px 10px; border: 1px solid var(--line); border-radius: 8px; background: #fff; margin-bottom: 6px; cursor: pointer; font-size: 13px; }
+  .kana-result-btn.active { border-color: var(--indigo); background: #E8E0C9; }
+  .kana-back { font-size: 12px; color: var(--indigo); background: none; border: none; padding: 0; margin-bottom: 10px; cursor: pointer; }
   .scan-video { width: 100%; max-width: 320px; border-radius: 10px; border: 1px solid var(--line); display: block; margin: 10px auto; background: #000; }
   .scan-hint { font-size: 11.5px; color: var(--ink-soft); text-align: center; margin: 6px 0; }
   .scan-error { font-size: 12px; color: #9B4A3D; margin: 8px 0; }
@@ -104,20 +112,83 @@ const PRESETS = [
 ];
 
 const INGREDIENTS = [
-  { id: "ig1", name: "餅", kcal: 223, protein: 4.3, fat: 0.8, carb: 50.3 },
-  { id: "ig2", name: "生姜", kcal: 30, protein: 0.9, fat: 0.3, carb: 6.6 },
-  { id: "ig3", name: "鶏むね挽肉", kcal: 150, protein: 17.0, fat: 9.0, carb: 0 },
-  { id: "ig4", name: "ほうれん草", kcal: 20, protein: 2.2, fat: 0.4, carb: 3.1 },
-  { id: "ig5", name: "大根", kcal: 18, protein: 0.5, fat: 0.1, carb: 4.1 },
-  { id: "ig6", name: "だし", kcal: 2, protein: 0.2, fat: 0, carb: 0.4 },
-  { id: "ig7", name: "白米(炊飯後)", kcal: 168, protein: 2.5, fat: 0.3, carb: 37.1 },
-  { id: "ig8", name: "鶏むね肉(皮なし)", kcal: 108, protein: 22.3, fat: 1.5, carb: 0 },
-  { id: "ig9", name: "豚こま切れ肉", kcal: 221, protein: 18.5, fat: 15.1, carb: 0.1 },
-  { id: "ig10", name: "玉ねぎ", kcal: 37, protein: 1.0, fat: 0.1, carb: 8.4 },
-  { id: "ig11", name: "にんじん", kcal: 39, protein: 0.6, fat: 0.1, carb: 9.1 },
-  { id: "ig12", name: "木綿豆腐", kcal: 72, protein: 6.6, fat: 4.2, carb: 1.6 },
-  { id: "ig13", name: "卵", kcal: 142, protein: 12.2, fat: 9.4, carb: 3.4 },
+  { id: "ig1", name: "白米(炊飯後)", yomi: "はくまい", kcal: 168, protein: 2.5, fat: 0.3, carb: 37.1 },
+  { id: "ig2", name: "玄米ご飯", yomi: "げんまいごはん", kcal: 165, protein: 2.8, fat: 1.0, carb: 35.6 },
+  { id: "ig3", name: "食パン", yomi: "しょくぱん", kcal: 264, protein: 9.3, fat: 4.4, carb: 46.7 },
+  { id: "ig4", name: "うどん(茹で)", yomi: "うどん", kcal: 105, protein: 2.6, fat: 0.4, carb: 21.6 },
+  { id: "ig5", name: "そば(茹で)", yomi: "そば", kcal: 132, protein: 4.8, fat: 0.7, carb: 27.0 },
+  { id: "ig6", name: "スパゲッティ(茹で)", yomi: "すぱげってぃ", kcal: 150, protein: 5.2, fat: 0.9, carb: 28.4 },
+  { id: "ig7", name: "餅", yomi: "もち", kcal: 223, protein: 4.3, fat: 0.8, carb: 50.3 },
+  { id: "ig8", name: "じゃがいも", yomi: "じゃがいも", kcal: 59, protein: 1.3, fat: 0.1, carb: 13.9 },
+  { id: "ig9", name: "さつまいも", yomi: "さつまいも", kcal: 126, protein: 0.9, fat: 0.1, carb: 29.7 },
+  { id: "ig10", name: "鶏むね肉(皮なし)", yomi: "とりむねにく", kcal: 108, protein: 22.3, fat: 1.5, carb: 0 },
+  { id: "ig11", name: "鶏むね挽肉", yomi: "とりむねひきにく", kcal: 150, protein: 17.0, fat: 9.0, carb: 0 },
+  { id: "ig12", name: "鶏もも肉(皮つき)", yomi: "とりももにく", kcal: 200, protein: 16.6, fat: 14.0, carb: 0 },
+  { id: "ig13", name: "鶏ささみ", yomi: "とりささみ", kcal: 105, protein: 23.0, fat: 0.8, carb: 0 },
+  { id: "ig14", name: "豚ロース", yomi: "ぶたろーす", kcal: 263, protein: 19.3, fat: 19.2, carb: 0.2 },
+  { id: "ig15", name: "豚こま切れ肉", yomi: "ぶたこまぎれにく", kcal: 221, protein: 18.5, fat: 15.1, carb: 0.1 },
+  { id: "ig16", name: "牛もも肉(赤身)", yomi: "ぎゅうももにく", kcal: 182, protein: 21.2, fat: 10.7, carb: 0.5 },
+  { id: "ig17", name: "合いびき肉", yomi: "あいびきにく", kcal: 224, protein: 17.0, fat: 17.1, carb: 0.2 },
+  { id: "ig18", name: "鮭", yomi: "さけ", kcal: 133, protein: 22.3, fat: 4.1, carb: 0.1 },
+  { id: "ig19", name: "サバ", yomi: "さば", kcal: 211, protein: 16.5, fat: 16.5, carb: 0.1 },
+  { id: "ig20", name: "マグロ赤身", yomi: "まぐろあかみ", kcal: 115, protein: 26.4, fat: 1.4, carb: 0.1 },
+  { id: "ig21", name: "エビ", yomi: "えび", kcal: 82, protein: 18.4, fat: 0.6, carb: 0.3 },
+  { id: "ig22", name: "ツナ缶(水煮)", yomi: "つなかん", kcal: 70, protein: 16.0, fat: 0.7, carb: 0.1 },
+  { id: "ig23", name: "卵", yomi: "たまご", kcal: 142, protein: 12.2, fat: 9.4, carb: 3.4 },
+  { id: "ig24", name: "納豆", yomi: "なっとう", kcal: 190, protein: 16.5, fat: 10.0, carb: 12.1 },
+  { id: "ig25", name: "木綿豆腐", yomi: "もめんどうふ", kcal: 72, protein: 6.6, fat: 4.2, carb: 1.6 },
+  { id: "ig26", name: "絹ごし豆腐", yomi: "きぬごしどうふ", kcal: 56, protein: 4.9, fat: 3.0, carb: 2.3 },
+  { id: "ig27", name: "厚揚げ", yomi: "あつあげ", kcal: 143, protein: 10.7, fat: 11.3, carb: 0.9 },
+  { id: "ig28", name: "豆乳(無調整)", yomi: "とうにゅう", kcal: 46, protein: 3.6, fat: 2.0, carb: 3.1 },
+  { id: "ig29", name: "牛乳", yomi: "ぎゅうにゅう", kcal: 67, protein: 3.3, fat: 3.8, carb: 4.8 },
+  { id: "ig30", name: "ヨーグルト(無糖)", yomi: "よーぐると", kcal: 56, protein: 3.6, fat: 3.0, carb: 4.9 },
+  { id: "ig31", name: "プロセスチーズ", yomi: "ぷろせすちーず", kcal: 339, protein: 22.7, fat: 26.0, carb: 1.3 },
+  { id: "ig32", name: "ホエイプロテイン(粉末)", yomi: "ほえいぷろていん", kcal: 387, protein: 70.0, fat: 5.0, carb: 10.0 },
+  { id: "ig33", name: "トマト", yomi: "とまと", kcal: 19, protein: 0.7, fat: 0.1, carb: 4.7 },
+  { id: "ig34", name: "とうもろこし(ゆで)", yomi: "とうもろこし", kcal: 92, protein: 3.5, fat: 1.3, carb: 18.6 },
+  { id: "ig35", name: "キャベツ", yomi: "きゃべつ", kcal: 21, protein: 1.3, fat: 0.2, carb: 4.7 },
+  { id: "ig36", name: "ほうれん草(茹で)", yomi: "ほうれんそう", kcal: 23, protein: 2.6, fat: 0.5, carb: 2.4 },
+  { id: "ig37", name: "もやし", yomi: "もやし", kcal: 14, protein: 1.7, fat: 0.1, carb: 1.3 },
+  { id: "ig38", name: "きゅうり", yomi: "きゅうり", kcal: 13, protein: 1.0, fat: 0.1, carb: 2.0 },
+  { id: "ig39", name: "玉ねぎ", yomi: "たまねぎ", kcal: 37, protein: 1.0, fat: 0.1, carb: 8.4 },
+  { id: "ig40", name: "にんじん", yomi: "にんじん", kcal: 39, protein: 0.6, fat: 0.1, carb: 9.1 },
+  { id: "ig41", name: "ブロッコリー", yomi: "ぶろっこりー", kcal: 33, protein: 4.3, fat: 0.5, carb: 5.2 },
+  { id: "ig42", name: "大根", yomi: "だいこん", kcal: 18, protein: 0.5, fat: 0.1, carb: 4.1 },
+  { id: "ig43", name: "生姜", yomi: "しょうが", kcal: 30, protein: 0.9, fat: 0.3, carb: 6.6 },
+  { id: "ig44", name: "だし", yomi: "だし", kcal: 2, protein: 0.2, fat: 0, carb: 0.4 },
+  { id: "ig45", name: "バナナ", yomi: "ばなな", kcal: 86, protein: 1.1, fat: 0.2, carb: 22.5 },
+  { id: "ig46", name: "りんご", yomi: "りんご", kcal: 54, protein: 0.2, fat: 0.1, carb: 14.3 },
+  { id: "ig47", name: "みかん", yomi: "みかん", kcal: 46, protein: 0.7, fat: 0.1, carb: 11.6 },
+  { id: "ig48", name: "キウイ", yomi: "きうい", kcal: 51, protein: 0.8, fat: 0.1, carb: 13.2 },
+  { id: "ig49", name: "味噌汁(具なし・100mlあたり)", yomi: "みそしる", kcal: 22, protein: 1.4, fat: 0.7, carb: 2.5 },
+  { id: "ig50", name: "オレンジジュース", yomi: "おれんじじゅーす", kcal: 42, protein: 0.7, fat: 0.1, carb: 10.5 },
 ];
+
+const KANA_ROWS = [
+  ["あ", "い", "う", "え", "お"],
+  ["か", "き", "く", "け", "こ"],
+  ["さ", "し", "す", "せ", "そ"],
+  ["た", "ち", "つ", "て", "と"],
+  ["な", "に", "ぬ", "ね", "の"],
+  ["は", "ひ", "ふ", "へ", "ほ"],
+  ["ま", "み", "む", "め", "も"],
+  ["や", "", "ゆ", "", "よ"],
+  ["ら", "り", "る", "れ", "ろ"],
+  ["わ", "", "を", "", "ん"],
+];
+
+function normalizeKana(ch) {
+  const map = {
+    "が": "か", "ぎ": "き", "ぐ": "く", "げ": "け", "ご": "こ",
+    "ざ": "さ", "じ": "し", "ず": "す", "ぜ": "せ", "ぞ": "そ",
+    "だ": "た", "ぢ": "ち", "づ": "つ", "で": "て", "ど": "と",
+    "ば": "は", "び": "ひ", "ぶ": "ふ", "べ": "へ", "ぼ": "ほ",
+    "ぱ": "は", "ぴ": "ひ", "ぷ": "ふ", "ぺ": "へ", "ぽ": "ほ",
+    "ゃ": "や", "ゅ": "ゆ", "ょ": "よ", "っ": "つ",
+    "ぁ": "あ", "ぃ": "い", "ぅ": "う", "ぇ": "え", "ぉ": "お",
+  };
+  return map[ch] || ch;
+}
 
 const DEFAULT_TARGETS = { protein: 60, fat: 50, carb: 250 };
 
@@ -151,6 +222,9 @@ function App() {
   const [saveError, setSaveError] = useState(false);
   const [selectedDate, setSelectedDate] = useState(todayKey());
   const [mode, setMode] = useState("preset");
+  const [kanaSelected, setKanaSelected] = useState(null);
+  const [kanaIngredientId, setKanaIngredientId] = useState(null);
+  const [kanaGrams, setKanaGrams] = useState(100);
   const [selectedPreset, setSelectedPreset] = useState((data.customPresets && data.customPresets[0] && data.customPresets[0].id) || "");
   const [servings, setServings] = useState(1);
   const [manual, setManual] = useState({ name: "", kcal: "", protein: "", fat: "", carb: "" });
@@ -160,7 +234,7 @@ function App() {
   const [dishName, setDishName] = useState("");
   const [rows, setRows] = useState([{ id: uid(), ingredientId: INGREDIENTS[0].id, grams: 100 }]);
   const [newIngredientOpen, setNewIngredientOpen] = useState(false);
-  const [newIngredient, setNewIngredient] = useState({ name: "", kcal: "", protein: "", fat: "", carb: "" });
+  const [newIngredient, setNewIngredient] = useState({ name: "", yomi: "", kcal: "", protein: "", fat: "", carb: "" });
   const [backupMsg, setBackupMsg] = useState(null);
   const [scanOpen, setScanOpen] = useState(false);
   const [scanning, setScanning] = useState(false);
@@ -246,13 +320,14 @@ function App() {
     const ing = {
       id: uid(),
       name: newIngredient.name.trim(),
+      yomi: newIngredient.yomi.trim(),
       kcal: Number(newIngredient.kcal) || 0,
       protein: Number(newIngredient.protein) || 0,
       fat: Number(newIngredient.fat) || 0,
       carb: Number(newIngredient.carb) || 0,
     };
     persist({ ...data, customIngredients: [...customIngredients, ing] });
-    setNewIngredient({ name: "", kcal: "", protein: "", fat: "", carb: "" });
+    setNewIngredient({ name: "", yomi: "", kcal: "", protein: "", fat: "", carb: "" });
     setNewIngredientOpen(false);
   }
 
@@ -284,6 +359,20 @@ function App() {
     if (!manual.name.trim()) return;
     addEntry({ name: manual.name.trim(), kcal: Number(manual.kcal) || 0, protein: Number(manual.protein) || 0, fat: Number(manual.fat) || 0, carb: Number(manual.carb) || 0 });
     setManual({ name: "", kcal: "", protein: "", fat: "", carb: "" });
+  }
+  function handleAddKanaIngredient() {
+    const ing = allIngredients.find(i => i.id === kanaIngredientId);
+    if (!ing) return;
+    const factor = (Number(kanaGrams) || 0) / 100;
+    addEntry({
+      name: `${ing.name} ${kanaGrams}g`,
+      kcal: Math.round(ing.kcal * factor * 10) / 10,
+      protein: Math.round(ing.protein * factor * 10) / 10,
+      fat: Math.round(ing.fat * factor * 10) / 10,
+      carb: Math.round(ing.carb * factor * 10) / 10,
+    });
+    setKanaIngredientId(null);
+    setKanaGrams(100);
   }
   function stopScan() {
     if (readerRef.current) {
@@ -450,6 +539,7 @@ function App() {
         <p className="nb-section-title">＋ 食事を記録する</p>
         <div className="tab-row">
           <button className={`tab-btn ${mode === "preset" ? "active" : ""}`} onClick={() => setMode("preset")}>リストから選ぶ</button>
+          <button className={`tab-btn ${mode === "ingredient" ? "active" : ""}`} onClick={() => setMode("ingredient")}>食材を選ぶ</button>
           <button className={`tab-btn ${mode === "manual" ? "active" : ""}`} onClick={() => setMode("manual")}>手入力する</button>
         </div>
         {mode === "preset" ? (
@@ -465,6 +555,54 @@ function App() {
               <button className="add-btn" style={{ marginTop: 0 }} onClick={handleAddPreset}>＋ 追加</button>
             </div>
           )
+        ) : mode === "ingredient" ? (
+          <div>
+            {!kanaSelected ? (
+              <div>
+                <p className="backup-note">頭文字をタップすると、その読みで始まる食材が出てきます。</p>
+                <div className="kana-grid">
+                  {KANA_ROWS.map((row, ri) => (
+                    <div className="kana-row" key={ri}>
+                      {row.map((k, ki) =>
+                        k ? (
+                          <button key={ki} className="kana-btn" onClick={() => { setKanaSelected(k); setKanaIngredientId(null); }}>{k}</button>
+                        ) : (
+                          <span key={ki} className="kana-btn placeholder"></span>
+                        )
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            ) : (
+              <div>
+                <button className="kana-back" onClick={() => { setKanaSelected(null); setKanaIngredientId(null); }}>← 五十音に戻る</button>
+                {(() => {
+                  const matches = allIngredients.filter(ing => ing.yomi && normalizeKana(ing.yomi[0]) === kanaSelected);
+                  if (matches.length === 0) {
+                    return <p className="empty-note">「{kanaSelected}」で始まる食材はまだ登録されていません。オリジナル料理の「選択肢に無い材料をリストに追加する」から登録できます。</p>;
+                  }
+                  return matches.map(ing => (
+                    <button
+                      key={ing.id}
+                      className={`kana-result-btn ${kanaIngredientId === ing.id ? "active" : ""}`}
+                      onClick={() => setKanaIngredientId(ing.id)}
+                    >
+                      {ing.name}
+                      <span style={{ color: "var(--ink-soft)", fontSize: 11 }}> （100gあたり {ing.kcal}kcal・P{ing.protein}g・F{ing.fat}g・C{ing.carb}g）</span>
+                    </button>
+                  ));
+                })()}
+                {kanaIngredientId && (
+                  <div className="form-row" style={{ marginTop: 8 }}>
+                    <input type="number" value={kanaGrams} onChange={e => setKanaGrams(e.target.value)} style={{ width: 70 }} />
+                    <span style={{ fontSize: 12.5, color: "var(--ink-soft)" }}>g</span>
+                    <button className="add-btn" style={{ marginTop: 0 }} onClick={handleAddKanaIngredient}>＋ 追加</button>
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
         ) : (
           <div>
             <input type="text" placeholder="食品名" value={manual.name} onChange={e => setManual({ ...manual, name: e.target.value })} style={{ width: "100%" }} />
@@ -596,13 +734,20 @@ function App() {
                     onChange={e => setNewIngredient({ ...newIngredient, name: e.target.value })}
                     style={{ width: "100%", marginBottom: 6 }}
                   />
+                  <input
+                    type="text"
+                    placeholder="よみがな（ひらがな・例：とまと）"
+                    value={newIngredient.yomi}
+                    onChange={e => setNewIngredient({ ...newIngredient, yomi: e.target.value })}
+                    style={{ width: "100%", marginBottom: 6 }}
+                  />
                   <div className="form-grid">
                     <input type="number" placeholder="カロリー(kcal/100g)" value={newIngredient.kcal} onChange={e => setNewIngredient({ ...newIngredient, kcal: e.target.value })} />
                     <input type="number" placeholder="たんぱく質(g/100g)" value={newIngredient.protein} onChange={e => setNewIngredient({ ...newIngredient, protein: e.target.value })} />
                     <input type="number" placeholder="脂質(g/100g)" value={newIngredient.fat} onChange={e => setNewIngredient({ ...newIngredient, fat: e.target.value })} />
                     <input type="number" placeholder="炭水化物(g/100g)" value={newIngredient.carb} onChange={e => setNewIngredient({ ...newIngredient, carb: e.target.value })} />
                   </div>
-                  <p style={{ fontSize: 11, color: "var(--ink-soft)", margin: "4px 0 0" }}>※100gあたりの栄養成分を入力してください。登録後は材料の選択肢に追加され、グラム数を入れるだけで使えるようになります。</p>
+                  <p style={{ fontSize: 11, color: "var(--ink-soft)", margin: "4px 0 0" }}>※100gあたりの栄養成分を入力してください。よみがなを入れておくと、「食材を選ぶ」の五十音検索でも見つけやすくなります。</p>
                   <button className="add-btn" onClick={saveCustomIngredient}>＋ この材料をリストに追加</button>
                 </div>
               )}
