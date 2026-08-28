@@ -262,6 +262,11 @@ function App() {
   const customPresets = data.customPresets || [];
   const customIngredients = data.customIngredients || [];
   const allIngredients = [...INGREDIENTS, ...customIngredients];
+  const availableKana = useMemo(() => {
+    const set = new Set();
+    allIngredients.forEach(ing => { if (ing.yomi) set.add(normalizeKana(ing.yomi[0])); });
+    return set;
+  }, [allIngredients]);
   const barcodeProducts = data.barcodeProducts || {};
   const allPresets = [...PRESETS, ...customPresets]; // PRESETSは空なので実質customPresetsのみ
 
@@ -564,7 +569,7 @@ function App() {
                   {KANA_ROWS.map((row, ri) => (
                     <div className="kana-row" key={ri}>
                       {row.map((k, ki) =>
-                        k ? (
+                        k && availableKana.has(k) ? (
                           <button key={ki} className="kana-btn" onClick={() => { setKanaSelected(k); setKanaIngredientId(null); }}>{k}</button>
                         ) : (
                           <span key={ki} className="kana-btn placeholder"></span>
