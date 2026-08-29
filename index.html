@@ -192,6 +192,53 @@ function normalizeKana(ch) {
 
 const DEFAULT_TARGETS = { protein: 60, fat: 50, carb: 250 };
 
+// 「自分の料理」に自動で追加される定番メニュー。
+// 1度だけ追加され、以後ユーザーが削除しても再度追加されません（seedVersionで管理）。
+const CURRENT_SEED_VERSION = 1;
+const SEED_PRESETS_V1 = [
+  { name: "冷やし担々麺", unit: "1人前(丼1杯・613g)", kcal: 877, protein: 41.8, fat: 53.2, carb: 72.1 },
+  // マクドナルド：バーガー・朝マック
+  { name: "マクドナルド ハンバーガー", unit: "1個", kcal: 259, protein: 13.0, fat: 9.5, carb: 30.3 },
+  { name: "マクドナルド チーズバーガー", unit: "1個", kcal: 310, protein: 15.9, fat: 13.5, carb: 31.0 },
+  { name: "マクドナルド ダブルチーズバーガー", unit: "1個", kcal: 459, protein: 26.4, fat: 25.1, carb: 31.8 },
+  { name: "マクドナルド ビッグマック", unit: "1個", kcal: 524, protein: 26.1, fat: 28.0, carb: 42.0 },
+  { name: "マクドナルド てりやきマックバーガー", unit: "1個", kcal: 485, protein: 14.2, fat: 31.3, carb: 37.4 },
+  { name: "マクドナルド てりやきチキンフィレオ", unit: "1個", kcal: 496, protein: 20.1, fat: 23.0, carb: 52.8 },
+  { name: "マクドナルド フィレオフィッシュ", unit: "1個", kcal: 338, protein: 15.1, fat: 14.2, carb: 37.4 },
+  { name: "マクドナルド チキンフィレオ", unit: "1個", kcal: 479, protein: 19.9, fat: 23.8, carb: 47.0 },
+  { name: "マクドナルド マックチキン", unit: "1個", kcal: 386, protein: 13.5, fat: 19.6, carb: 39.5 },
+  { name: "マクドナルド チキチー(マックチキン チーズ)", unit: "1個", kcal: 436, protein: 16.4, fat: 23.6, carb: 40.3 },
+  { name: "マクドナルド えびフィレオ", unit: "1個", kcal: 408, protein: 11.4, fat: 18.6, carb: 49.5 },
+  { name: "マクドナルド エグチ(エッグチーズバーガー)", unit: "1個", kcal: 390, protein: 22.4, fat: 19.0, carb: 31.2 },
+  { name: "マクドナルド ベーコンレタスバーガー", unit: "1個", kcal: 362, protein: 17.5, fat: 19.4, carb: 30.1 },
+  { name: "マクドナルド エッグマックマフィン", unit: "1個", kcal: 310, protein: 18.6, fat: 13.6, carb: 27.2 },
+  { name: "マクドナルド ソーセージマフィン", unit: "1個", kcal: 397, protein: 15.5, fat: 25.1, carb: 27.1 },
+  { name: "マクドナルド ソーセージエッグマフィン", unit: "1個", kcal: 477, protein: 22.0, fat: 30.6, carb: 27.3 },
+  { name: "マクドナルド ホットケーキ(シロップ・パット別)", unit: "1皿", kcal: 323, protein: 8.3, fat: 9.3, carb: 53.5 },
+  // マクドナルド：サイドメニュー
+  { name: "マクドナルド マックフライポテト(S)", unit: "S", kcal: 225, protein: 3.0, fat: 11.0, carb: 28.7 },
+  { name: "マクドナルド マックフライポテト(M)", unit: "M", kcal: 410, protein: 5.5, fat: 20.0, carb: 52.4 },
+  { name: "マクドナルド マックフライポテト(L)", unit: "L", kcal: 517, protein: 7.0, fat: 25.2, carb: 66.0 },
+  { name: "マクドナルド サイドサラダ", unit: "1個", kcal: 10, protein: 0.5, fat: 0.1, carb: 2.3 },
+  { name: "マクドナルド チキンマックナゲット 5ピース", unit: "5ピース", kcal: 262, protein: 15.3, fat: 15.9, carb: 14.4 },
+  { name: "マクドナルド チキンマックナゲット 15ピース", unit: "15ピース", kcal: 786, protein: 46.0, fat: 47.8, carb: 43.2 },
+  { name: "マクドナルド ハッシュポテト", unit: "1個", kcal: 157, protein: 1.4, fat: 10.2, carb: 14.8 },
+  { name: "マクドナルド えだまめコーン", unit: "1個", kcal: 84, protein: 5.2, fat: 3.2, carb: 9.4 },
+  // マクドナルド：ドリンク(Mサイズ)
+  { name: "マクドナルド コカ・コーラ(M)", unit: "M", kcal: 145, protein: 0, fat: 0, carb: 36.5 },
+  { name: "マクドナルド コカ・コーラ ゼロ(M)", unit: "M", kcal: 0, protein: 0, fat: 0, carb: 0 },
+  { name: "マクドナルド スプライト(M)", unit: "M", kcal: 128, protein: 0, fat: 0, carb: 32.1 },
+  { name: "マクドナルド ファンタ グレープ(M)", unit: "M", kcal: 164, protein: 0, fat: 0, carb: 40.9 },
+  { name: "マクドナルド 野菜生活100(M)", unit: "M", kcal: 121, protein: 0.8, fat: 0.5, carb: 28.3 },
+  { name: "マクドナルド プレミアムローストコーヒー(M)", unit: "M", kcal: 12, protein: 0.6, fat: 0, carb: 2.1 },
+  { name: "マクドナルド カフェラテ(M)", unit: "M", kcal: 116, protein: 5.7, fat: 6.5, carb: 8.6 },
+  { name: "マクドナルド キャラメルラテ(M)", unit: "M", kcal: 168, protein: 5.8, fat: 6.5, carb: 21.5 },
+  // マクドナルド：デザート
+  { name: "マクドナルド マックフルーリー オレオクッキー", unit: "1個", kcal: 235, protein: 5.8, fat: 6.8, carb: 37.9 },
+  { name: "マクドナルド ホットアップルパイ", unit: "1個", kcal: 211, protein: 2.1, fat: 10.9, carb: 26.2 },
+  { name: "マクドナルド マックシェイク バニラ(M)", unit: "M", kcal: 367, protein: 6.8, fat: 5.7, carb: 72.2 },
+];
+
 function todayKey(d = new Date()) {
   const y = d.getFullYear();
   const m = String(d.getMonth() + 1).padStart(2, "0");
@@ -258,6 +305,18 @@ function App() {
       setSaveError(true);
     }
   }
+
+  useEffect(() => {
+    if ((data.seedVersion || 0) < CURRENT_SEED_VERSION) {
+      const seeded = SEED_PRESETS_V1.map(p => ({ ...p, id: uid() }));
+      persist({
+        ...data,
+        customPresets: [...(data.customPresets || []), ...seeded],
+        seedVersion: CURRENT_SEED_VERSION,
+      });
+    }
+    // eslint-disable-next-line
+  }, []);
 
   const dayEntries = (data.entries && data.entries[selectedDate]) || [];
   const totals = useMemo(() => dayEntries.reduce((acc, e) => ({
@@ -520,6 +579,7 @@ function App() {
           customPresets: parsed.customPresets || [],
           barcodeProducts: parsed.barcodeProducts || {},
           customIngredients: parsed.customIngredients || [],
+          seedVersion: parsed.seedVersion || 0,
         };
         persist(next);
         setTargetsDraft(next.targets);
