@@ -1,7 +1,7 @@
 // バージョン番号を上げると、古いキャッシュが自動的に破棄され、
 // 次回起動時に新しいファイルへ切り替わります。
 // ファイルを更新したときは、この数字を1つ増やしてください（v1 → v2 など）。
-const CACHE_VERSION = "v12";
+const CACHE_VERSION = "v13";
 const CACHE_NAME = `nutrition-notebook-${CACHE_VERSION}`;
 
 const APP_FILES = [
