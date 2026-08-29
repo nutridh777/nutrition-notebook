@@ -45,8 +45,11 @@
   .gauge-row { margin-bottom: 14px; }
   .gauge-label { display: flex; justify-content: space-between; font-size: 12.5px; margin-bottom: 5px; color: var(--ink-soft); }
   .gauge-label b { color: var(--ink); font-weight: 700; }
-  .gauge-track { height: 8px; background: #E3DCC8; border-radius: 5px; overflow: hidden; }
-  .gauge-fill { height: 100%; border-radius: 5px; }
+  .gauge-track { height: 8px; background: #E3DCC8; border-radius: 5px; overflow: hidden; display: flex; }
+  .gauge-fill { height: 100%; }
+  .gauge-fill:first-child { border-radius: 5px 0 0 5px; }
+  .gauge-fill:last-child { border-radius: 0 5px 5px 0; }
+  .gauge-fill:only-child { border-radius: 5px; }
   .tab-row { display: flex; gap: 8px; margin-bottom: 14px; flex-wrap: wrap; }
   .tab-btn { font-size: 12.5px; padding: 6px 14px; border-radius: 999px; border: 1px solid var(--line); background: transparent; color: var(--ink-soft); cursor: pointer; }
   .tab-btn.active { background: var(--indigo); color: #F6F2E8; border-color: var(--indigo); }
@@ -614,11 +617,18 @@ function App() {
       <div className="nb-gauges">
         <p className="nb-section-title">{fmtLong(selectedDate)}のPFC</p>
         {[{ key: "protein", label: "たんぱく質", color: "var(--protein)" }, { key: "fat", label: "脂質", color: "var(--fat)" }, { key: "carb", label: "炭水化物", color: "var(--carb)" }].map(m => {
-          const val = totals[m.key]; const target = targets[m.key] || 1; const pct = Math.min(100, (val / target) * 100);
+          const val = totals[m.key]; const target = targets[m.key] || 1;
+          const over = Math.max(0, val - target);
+          const scaleMax = Math.max(target, val);
+          const normalPct = (Math.min(val, target) / scaleMax) * 100;
+          const overPct = (over / scaleMax) * 100;
           return (
             <div className="gauge-row" key={m.key}>
-              <div className="gauge-label"><span>{m.label}</span><b>{Math.round(val * 10) / 10}g / {target}g</b></div>
-              <div className="gauge-track"><div className="gauge-fill" style={{ width: `${pct}%`, background: m.color }} /></div>
+              <div className="gauge-label"><span>{m.label}</span><b style={over > 0 ? { color: "#9B4A3D" } : undefined}>{Math.round(val * 10) / 10}g / {target}g{over > 0 ? `（+${Math.round(over * 10) / 10}g）` : ""}</b></div>
+              <div className="gauge-track">
+                <div className="gauge-fill" style={{ width: `${normalPct}%`, background: m.color }} />
+                {over > 0 && <div className="gauge-fill gauge-fill-over" style={{ width: `${overPct}%`, background: "#9B4A3D" }} />}
+              </div>
             </div>
           );
         })}
