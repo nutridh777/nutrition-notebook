@@ -230,6 +230,12 @@ function App() {
   const [manual, setManual] = useState({ name: "", kcal: "", protein: "", fat: "", carb: "" });
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [targetsDraft, setTargetsDraft] = useState(data.targets || DEFAULT_TARGETS);
+  const [calcOpen, setCalcOpen] = useState(false);
+  const [calcMode, setCalcMode] = useState("bulk");
+  const [leanMass, setLeanMass] = useState("");
+  const [activityFactor, setActivityFactor] = useState(1.7);
+  const [calcError, setCalcError] = useState(null);
+  const [calcRatio, setCalcRatio] = useState({ p: 30, f: 25, c: 45 });
   const [composerOpen, setComposerOpen] = useState(false);
   const [dishName, setDishName] = useState("");
   const [rows, setRows] = useState([{ id: uid(), ingredientId: INGREDIENTS[0].id, grams: 100 }]);
@@ -259,6 +265,14 @@ function App() {
   }), { kcal: 0, protein: 0, fat: 0, carb: 0 }), [dayEntries]);
 
   const targets = data.targets || DEFAULT_TARGETS;
+  const draftKcalBreakdown = useMemo(() => {
+    const pKcal = (Number(targetsDraft.protein) || 0) * 4;
+    const fKcal = (Number(targetsDraft.fat) || 0) * 9;
+    const cKcal = (Number(targetsDraft.carb) || 0) * 4;
+    const total = pKcal + fKcal + cKcal;
+    const pct = (v) => (total > 0 ? Math.round((v / total) * 1000) / 10 : 0);
+    return { pKcal, fKcal, cKcal, total, pPct: pct(pKcal), fPct: pct(fKcal), cPct: pct(cKcal) };
+  }, [targetsDraft]);
   const customPresets = data.customPresets || [];
   const customIngredients = data.customIngredients || [];
   const allIngredients = [...INGREDIENTS, ...customIngredients];
@@ -449,6 +463,30 @@ function App() {
 
   function saveTargets() { persist({ ...data, targets: targetsDraft }); setSettingsOpen(false); }
 
+  function switchCalcMode(mode) {
+    setCalcMode(mode);
+    setCalcRatio(mode === "bulk" ? { p: 30, f: 25, c: 45 } : { p: 22, f: 65, c: 13 });
+  }
+
+  const calcBmr = leanMass ? (Number(leanMass) || 0) * 28.5 : null;
+  const calcMaintenance = calcBmr ? calcBmr * activityFactor : null;
+  const calcTargetKcal = calcMaintenance ? calcMaintenance + (calcMode === "bulk" ? 500 : -500) : null;
+  const calcRatioSum = calcRatio.p + calcRatio.f + calcRatio.c;
+  const calcGrams = calcTargetKcal ? {
+    protein: Math.round(((calcTargetKcal * calcRatio.p) / 100 / 4) * 10) / 10,
+    fat: Math.round(((calcTargetKcal * calcRatio.f) / 100 / 9) * 10) / 10,
+    carb: Math.round(((calcTargetKcal * calcRatio.c) / 100 / 4) * 10) / 10,
+  } : null;
+
+  function applyCalcResult() {
+    if (!calcGrams) {
+      setCalcError("除脂肪体重を入力してください。");
+      return;
+    }
+    setCalcError(null);
+    setTargetsDraft({ protein: calcGrams.protein, fat: calcGrams.fat, carb: calcGrams.carb });
+  }
+
   function exportBackup() {
     try {
       const blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json" });
@@ -535,7 +573,73 @@ function App() {
                 </label>
               ))}
             </div>
+
+            <div className="form-grid" style={{ gridTemplateColumns: "1fr 1fr 1fr", margin: "8px 0 6px" }}>
+              <div style={{ fontSize: 11, color: "var(--protein)" }}>{Math.round(draftKcalBreakdown.pKcal)}kcal（{draftKcalBreakdown.pPct}%）</div>
+              <div style={{ fontSize: 11, color: "var(--fat)" }}>{Math.round(draftKcalBreakdown.fKcal)}kcal（{draftKcalBreakdown.fPct}%）</div>
+              <div style={{ fontSize: 11, color: "var(--carb)" }}>{Math.round(draftKcalBreakdown.cKcal)}kcal（{draftKcalBreakdown.cPct}%）</div>
+            </div>
+            <p style={{ fontSize: 11, color: "var(--ink-soft)", margin: "0 0 10px" }}>合計 {Math.round(draftKcalBreakdown.total)}kcal</p>
+
             <button className="add-btn" onClick={saveTargets}>目標を保存</button>
+
+            <div style={{ marginTop: 16, paddingTop: 14, borderTop: "1px dashed var(--line)" }}>
+              <button className="settings-toggle" style={{ fontSize: 12.5 }} onClick={() => setCalcOpen(s => !s)}>
+                🧮 消費カロリーとPFC比率から計算する
+              </button>
+              {calcOpen && (
+                <div style={{ marginTop: 10 }}>
+                  <label style={{ fontSize: 11.5, color: "var(--ink-soft)", display: "block", marginBottom: 8 }}>
+                    除脂肪体重(kg)
+                    <input type="number" value={leanMass} onChange={e => { setLeanMass(e.target.value); setCalcError(null); }} placeholder="例：55" style={{ width: "100%", marginTop: 3 }} />
+                  </label>
+                  {calcBmr && <p style={{ fontSize: 11.5, color: "var(--ink-soft)", margin: "-4px 0 8px" }}>基礎代謝：{Math.round(calcBmr)}kcal（除脂肪体重 × 28.5）</p>}
+
+                  <p style={{ fontSize: 11, color: "var(--ink-soft)", margin: "0 0 6px" }}>活動レベル</p>
+                  <div className="tab-row">
+                    {[{ v: 1.3, label: "1.3（低い）" }, { v: 1.5, label: "1.5（やや低い）" }, { v: 1.7, label: "1.7（適度）" }, { v: 1.9, label: "1.9（高い）" }].map(opt => (
+                      <button key={opt.v} className={`tab-btn ${activityFactor === opt.v ? "active" : ""}`} onClick={() => setActivityFactor(opt.v)}>{opt.label}</button>
+                    ))}
+                  </div>
+                  {calcMaintenance && <p style={{ fontSize: 11.5, color: "var(--ink-soft)", margin: "0 0 10px" }}>消費カロリー：{Math.round(calcMaintenance)}kcal（基礎代謝 × 活動レベル）</p>}
+
+                  <p style={{ fontSize: 11, color: "var(--ink-soft)", margin: "0 0 6px" }}>目的</p>
+                  <div className="tab-row">
+                    <button className={`tab-btn ${calcMode === "bulk" ? "active" : ""}`} onClick={() => switchCalcMode("bulk")}>バルクアップ(+500kcal)</button>
+                    <button className={`tab-btn ${calcMode === "cut" ? "active" : ""}`} onClick={() => switchCalcMode("cut")}>減量(-500kcal)</button>
+                  </div>
+
+                  <p style={{ fontSize: 11, color: "var(--ink-soft)", margin: "0 0 6px" }}>PFC比率（%・合計100%が目安）</p>
+                  <div className="form-grid" style={{ gridTemplateColumns: "1fr 1fr 1fr", marginBottom: 4 }}>
+                    <label style={{ fontSize: 11, color: "var(--protein)" }}>
+                      P
+                      <input type="number" value={calcRatio.p} onChange={e => setCalcRatio({ ...calcRatio, p: Number(e.target.value) })} style={{ width: "100%", marginTop: 3 }} />
+                    </label>
+                    <label style={{ fontSize: 11, color: "var(--fat)" }}>
+                      F
+                      <input type="number" value={calcRatio.f} onChange={e => setCalcRatio({ ...calcRatio, f: Number(e.target.value) })} style={{ width: "100%", marginTop: 3 }} />
+                    </label>
+                    <label style={{ fontSize: 11, color: "var(--carb)" }}>
+                      C
+                      <input type="number" value={calcRatio.c} onChange={e => setCalcRatio({ ...calcRatio, c: Number(e.target.value) })} style={{ width: "100%", marginTop: 3 }} />
+                    </label>
+                  </div>
+                  {calcRatioSum !== 100 && <p style={{ fontSize: 11, color: "#9B4A3D", margin: "0 0 8px" }}>※合計{calcRatioSum}%です（100%になるよう調整すると目安通りになります）</p>}
+
+                  {calcGrams && (
+                    <div className="composer-total" style={{ marginTop: 4 }}>
+                      <div>目標摂取カロリー：{Math.round(calcTargetKcal)}kcal</div>
+                      <div style={{ fontWeight: 400, fontSize: 12.5, marginTop: 4 }}>
+                        P{calcGrams.protein}g ・ F{calcGrams.fat}g ・ C{calcGrams.carb}g
+                      </div>
+                    </div>
+                  )}
+                  <button className="add-btn" onClick={applyCalcResult}>この数値を上の目標グラム数に反映</button>
+                  {calcError && <p style={{ fontSize: 11.5, color: "#9B4A3D", margin: "6px 0 0" }}>{calcError}</p>}
+                  <p style={{ fontSize: 10.5, color: "var(--ink-soft)", margin: "6px 0 0" }}>反映後、「目標を保存」を押すと確定します。</p>
+                </div>
+              )}
+            </div>
           </div>
         )}
       </div>
