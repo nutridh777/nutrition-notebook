@@ -562,8 +562,11 @@ function App() {
       carb: Number(newBarcodeForm.carb) || 0,
     };
     const nextBarcodeProducts = { ...barcodeProducts, [code]: product };
-    persist({ ...data, barcodeProducts: nextBarcodeProducts });
-    addEntry(product);
+    const nextEntries = { ...data.entries };
+    const list = nextEntries[selectedDate] ? [...nextEntries[selectedDate]] : [];
+    list.push({ id: uid(), time: new Date().toTimeString().slice(0, 5), name: product.name, kcal: product.kcal, protein: product.protein, fat: product.fat, carb: product.carb });
+    nextEntries[selectedDate] = list;
+    persist({ ...data, entries: nextEntries, barcodeProducts: nextBarcodeProducts });
     setScannedCode(null);
     setNewBarcodeForm({ name: "", kcal: "", protein: "", fat: "", carb: "" });
     setScanOpen(false);
