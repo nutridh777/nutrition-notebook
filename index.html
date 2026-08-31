@@ -526,7 +526,15 @@ function App() {
     setScanning(true);
     setTimeout(() => {
       try {
-        const codeReader = new ZXing.BrowserMultiFormatReader();
+        const hints = new Map();
+        hints.set(ZXing.DecodeHintType.POSSIBLE_FORMATS, [
+          ZXing.BarcodeFormat.EAN_13,
+          ZXing.BarcodeFormat.EAN_8,
+          ZXing.BarcodeFormat.UPC_A,
+          ZXing.BarcodeFormat.UPC_E,
+        ]);
+        hints.set(ZXing.DecodeHintType.TRY_HARDER, true);
+        const codeReader = new ZXing.BrowserMultiFormatReader(hints);
         readerRef.current = codeReader;
         codeReader.decodeOnceFromVideoDevice(undefined, "barcode-video")
           .then(result => {
