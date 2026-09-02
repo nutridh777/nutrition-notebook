@@ -269,7 +269,7 @@ function loadData() {
     const raw = localStorage.getItem(STORAGE_KEY);
     if (raw) return JSON.parse(raw);
   } catch (e) {}
-  return { entries: {}, targets: DEFAULT_TARGETS, customPresets: [], barcodeProducts: {}, customIngredients: [] };
+  return { entries: {}, targets: DEFAULT_TARGETS, customPresets: [], barcodeProducts: {}, customIngredients: [], hiddenBuiltinIngredientIds: [] };
 }
 
 function App() {
@@ -295,6 +295,8 @@ function App() {
   const [activityFactor, setActivityFactor] = useState(1.7);
   const [calcError, setCalcError] = useState(null);
   const [calcRatio, setCalcRatio] = useState({ p: 30, f: 25, c: 45 });
+  const [calcRangeMin, setCalcRangeMin] = useState(300);
+  const [calcRangeMax, setCalcRangeMax] = useState(500);
   const [composerOpen, setComposerOpen] = useState(false);
   const [dishName, setDishName] = useState("");
   const [rows, setRows] = useState([{ id: uid(), ingredientId: INGREDIENTS[0].id, grams: 100 }]);
@@ -336,6 +338,12 @@ function App() {
   }), { kcal: 0, protein: 0, fat: 0, carb: 0 }), [dayEntries]);
 
   const targets = data.targets || DEFAULT_TARGETS;
+  const kcalStatus = useMemo(() => {
+    if (targets.kcalMin == null || targets.kcalMax == null) return null;
+    if (totals.kcal < targets.kcalMin) return { label: "不足", color: "var(--indigo-soft)" };
+    if (totals.kcal > targets.kcalMax) return { label: "過剰", color: "#9B4A3D" };
+    return { label: "範囲内", color: "var(--protein)" };
+  }, [totals.kcal, targets.kcalMin, targets.kcalMax]);
   const draftKcalBreakdown = useMemo(() => {
     const pKcal = (Number(targetsDraft.protein) || 0) * 4;
     const fKcal = (Number(targetsDraft.fat) || 0) * 9;
@@ -346,7 +354,8 @@ function App() {
   }, [targetsDraft]);
   const customPresets = data.customPresets || [];
   const customIngredients = data.customIngredients || [];
-  const allIngredients = [...INGREDIENTS, ...customIngredients];
+  const hiddenBuiltinIngredientIds = data.hiddenBuiltinIngredientIds || [];
+  const allIngredients = [...INGREDIENTS.filter(i => !hiddenBuiltinIngredientIds.includes(i.id)), ...customIngredients];
   const availableKana = useMemo(() => {
     const set = new Set();
     allIngredients.forEach(ing => { if (ing.yomi) set.add(normalizeKana(ing.yomi[0])); });
@@ -424,6 +433,14 @@ function App() {
   function deleteCustomIngredient(id) {
     persist({ ...data, customIngredients: customIngredients.filter(i => i.id !== id) });
     setRows(rows.map(r => r.ingredientId === id ? { ...r, ingredientId: INGREDIENTS[0].id } : r));
+  }
+  function hideBuiltinIngredient(id) {
+    persist({ ...data, hiddenBuiltinIngredientIds: [...hiddenBuiltinIngredientIds, id] });
+    if (kanaIngredientId === id) setKanaIngredientId(null);
+    setRows(rows.map(r => r.ingredientId === id ? { ...r, ingredientId: INGREDIENTS.find(i => i.id !== id).id } : r));
+  }
+  function restoreBuiltinIngredient(id) {
+    persist({ ...data, hiddenBuiltinIngredientIds: hiddenBuiltinIngredientIds.filter(hid => hid !== id) });
   }
   function addEntry(entry) {
     const nextEntries = { ...data.entries };
@@ -603,12 +620,18 @@ function App() {
 
   const calcBmr = leanMass ? (Number(leanMass) || 0) * 28.5 : null;
   const calcMaintenance = calcBmr ? calcBmr * activityFactor : null;
-  const calcTargetKcal = calcMaintenance ? calcMaintenance + (calcMode === "bulk" ? 500 : -500) : null;
+  const calcSign = calcMode === "bulk" ? 1 : -1;
+  const calcKcalRange = calcMaintenance ? (() => {
+    const a = calcMaintenance + calcSign * (Number(calcRangeMin) || 0);
+    const b = calcMaintenance + calcSign * (Number(calcRangeMax) || 0);
+    return { low: Math.min(a, b), high: Math.max(a, b) };
+  })() : null;
+  const calcTargetKcalMid = calcKcalRange ? (calcKcalRange.low + calcKcalRange.high) / 2 : null;
   const calcRatioSum = calcRatio.p + calcRatio.f + calcRatio.c;
-  const calcGrams = calcTargetKcal ? {
-    protein: Math.round(((calcTargetKcal * calcRatio.p) / 100 / 4) * 10) / 10,
-    fat: Math.round(((calcTargetKcal * calcRatio.f) / 100 / 9) * 10) / 10,
-    carb: Math.round(((calcTargetKcal * calcRatio.c) / 100 / 4) * 10) / 10,
+  const calcGrams = calcTargetKcalMid ? {
+    protein: Math.round(((calcTargetKcalMid * calcRatio.p) / 100 / 4) * 10) / 10,
+    fat: Math.round(((calcTargetKcalMid * calcRatio.f) / 100 / 9) * 10) / 10,
+    carb: Math.round(((calcTargetKcalMid * calcRatio.c) / 100 / 4) * 10) / 10,
   } : null;
 
   function applyCalcResult() {
@@ -617,7 +640,10 @@ function App() {
       return;
     }
     setCalcError(null);
-    setTargetsDraft({ protein: calcGrams.protein, fat: calcGrams.fat, carb: calcGrams.carb });
+    setTargetsDraft({
+      protein: calcGrams.protein, fat: calcGrams.fat, carb: calcGrams.carb,
+      kcalMin: Math.round(calcKcalRange.low), kcalMax: Math.round(calcKcalRange.high),
+    });
   }
 
   function exportBackup() {
@@ -653,6 +679,7 @@ function App() {
           customPresets: parsed.customPresets || [],
           barcodeProducts: parsed.barcodeProducts || {},
           customIngredients: parsed.customIngredients || [],
+          hiddenBuiltinIngredientIds: parsed.hiddenBuiltinIngredientIds || [],
           seedVersion: parsed.seedVersion || 0,
         };
         persist(next);
@@ -682,8 +709,15 @@ function App() {
             {!isToday && <button className="today-btn" onClick={() => setSelectedDate(todayKey())}>今日に戻る</button>}
           </div>
         </div>
-        <div className="nb-stamp"><span className="num">{Math.round(totals.kcal)}</span><span className="unit">kcal</span></div>
+        <div className="nb-stamp" style={kcalStatus ? { borderColor: kcalStatus.color, color: kcalStatus.color } : undefined}>
+          <span className="num">{Math.round(totals.kcal)}</span><span className="unit">kcal</span>
+        </div>
       </div>
+      {kcalStatus && (
+        <p style={{ fontSize: 11.5, color: kcalStatus.color, margin: "-12px 0 16px", textAlign: "right" }}>
+          目標 {targets.kcalMin}〜{targets.kcalMax}kcal（{kcalStatus.label}）
+        </p>
+      )}
 
       <div className="nb-gauges">
         <p className="nb-section-title">{fmtLong(selectedDate)}のPFC</p>
@@ -746,8 +780,15 @@ function App() {
 
                   <p style={{ fontSize: 11, color: "var(--ink-soft)", margin: "0 0 6px" }}>目的</p>
                   <div className="tab-row">
-                    <button className={`tab-btn ${calcMode === "bulk" ? "active" : ""}`} onClick={() => switchCalcMode("bulk")}>バルクアップ(+500kcal)</button>
-                    <button className={`tab-btn ${calcMode === "cut" ? "active" : ""}`} onClick={() => switchCalcMode("cut")}>減量(-500kcal)</button>
+                    <button className={`tab-btn ${calcMode === "bulk" ? "active" : ""}`} onClick={() => switchCalcMode("bulk")}>バルクアップ(+)</button>
+                    <button className={`tab-btn ${calcMode === "cut" ? "active" : ""}`} onClick={() => switchCalcMode("cut")}>減量(−)</button>
+                  </div>
+                  <p style={{ fontSize: 11, color: "var(--ink-soft)", margin: "0 0 6px" }}>調整幅（kcal・下限〜上限）</p>
+                  <div className="form-row" style={{ marginBottom: 10 }}>
+                    <input type="number" value={calcRangeMin} onChange={e => setCalcRangeMin(e.target.value)} style={{ width: 70 }} />
+                    <span style={{ fontSize: 12.5, color: "var(--ink-soft)" }}>〜</span>
+                    <input type="number" value={calcRangeMax} onChange={e => setCalcRangeMax(e.target.value)} style={{ width: 70 }} />
+                    <span style={{ fontSize: 12.5, color: "var(--ink-soft)" }}>kcal</span>
                   </div>
 
                   <p style={{ fontSize: 11, color: "var(--ink-soft)", margin: "0 0 6px" }}>PFC比率（%・合計100%が目安）</p>
@@ -769,9 +810,9 @@ function App() {
 
                   {calcGrams && (
                     <div className="composer-total" style={{ marginTop: 4 }}>
-                      <div>目標摂取カロリー：{Math.round(calcTargetKcal)}kcal</div>
+                      <div>目標摂取カロリー：{Math.round(calcKcalRange.low)}〜{Math.round(calcKcalRange.high)}kcal</div>
                       <div style={{ fontWeight: 400, fontSize: 12.5, marginTop: 4 }}>
-                        P{calcGrams.protein}g ・ F{calcGrams.fat}g ・ C{calcGrams.carb}g
+                        P{calcGrams.protein}g ・ F{calcGrams.fat}g ・ C{calcGrams.carb}g（中央値{Math.round(calcTargetKcalMid)}kcalで算出）
                       </div>
                     </div>
                   )}
@@ -850,16 +891,32 @@ function App() {
                   if (matches.length === 0) {
                     return <p className="empty-note">「{kanaSelected}」で始まる食材はまだ登録されていません。下の「手入力で追加する」から登録できます。</p>;
                   }
-                  return matches.map(ing => (
-                    <button
-                      key={ing.id}
-                      className={`kana-result-btn ${kanaIngredientId === ing.id ? "active" : ""}`}
-                      onClick={() => setKanaIngredientId(ing.id)}
-                    >
-                      {ing.name}
-                      <span style={{ color: "var(--ink-soft)", fontSize: 11 }}> （{ing.unitType === "piece" ? "1個あたり" : "100gあたり"} {ing.kcal}kcal・P{ing.protein}g・F{ing.fat}g・C{ing.carb}g）</span>
-                    </button>
-                  ));
+                  return matches.map(ing => {
+                    const isCustom = customIngredients.some(c => c.id === ing.id);
+                    return (
+                      <div key={ing.id} style={{ display: "flex", gap: 6, marginBottom: 6 }}>
+                        <button
+                          className={`kana-result-btn ${kanaIngredientId === ing.id ? "active" : ""}`}
+                          style={{ marginBottom: 0, flex: 1 }}
+                          onClick={() => setKanaIngredientId(ing.id)}
+                        >
+                          {ing.name}
+                          <span style={{ color: "var(--ink-soft)", fontSize: 11 }}> （{ing.unitType === "piece" ? "1個あたり" : "100gあたり"} {ing.kcal}kcal・P{ing.protein}g・F{ing.fat}g・C{ing.carb}g）</span>
+                        </button>
+                        {isCustom ? (
+                          <button
+                            className="del-btn"
+                            onClick={() => { deleteCustomIngredient(ing.id); if (kanaIngredientId === ing.id) setKanaIngredientId(null); }}
+                          >✕</button>
+                        ) : (
+                          <button
+                            className="del-btn"
+                            onClick={() => hideBuiltinIngredient(ing.id)}
+                          >✕</button>
+                        )}
+                      </div>
+                    );
+                  });
                 })()}
                 {kanaIngredientId && (() => {
                   const selectedIng = allIngredients.find(i => i.id === kanaIngredientId);
@@ -1063,6 +1120,20 @@ function App() {
                         <div className="entry-macro">100gあたり {ing.kcal}kcal ／ P{ing.protein}g ・ F{ing.fat}g ・ C{ing.carb}g</div>
                       </div>
                       <button className="del-btn" onClick={() => deleteCustomIngredient(ing.id)}>✕</button>
+                    </div>
+                  ))}
+                </div>
+              )}
+              {hiddenBuiltinIngredientIds.length > 0 && (
+                <div style={{ marginTop: 10 }}>
+                  <p style={{ fontSize: 11.5, color: "var(--ink-soft)", margin: "0 0 6px" }}>非表示にした基本食材</p>
+                  {INGREDIENTS.filter(ing => hiddenBuiltinIngredientIds.includes(ing.id)).map(ing => (
+                    <div className="entry-row" key={ing.id}>
+                      <div style={{ flex: 1 }}>
+                        <div className="entry-name">{ing.name}</div>
+                        <div className="entry-macro">{ing.unitType === "piece" ? "1個あたり" : "100gあたり"} {ing.kcal}kcal ／ P{ing.protein}g ・ F{ing.fat}g ・ C{ing.carb}g</div>
+                      </div>
+                      <button className="tab-btn" onClick={() => restoreBuiltinIngredient(ing.id)}>元に戻す</button>
                     </div>
                   ))}
                 </div>
