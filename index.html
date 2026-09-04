@@ -94,6 +94,11 @@
   .scan-error { font-size: 12px; color: #9B4A3D; margin: 8px 0; }
   .barcode-hit { background: #E8E0C9; border-radius: 8px; padding: 12px; margin-top: 10px; }
   .barcode-hit .entry-name { font-weight: 700; }
+  .cal-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 6px; }
+  .cal-weekday-row { margin-bottom: 8px; }
+  .cal-weekday { text-align: center; font-size: 11px; color: var(--ink-soft); }
+  .cal-cell { aspect-ratio: 1; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 13px; color: var(--ink); background: transparent; cursor: pointer; }
+  .cal-cell.empty { visibility: hidden; cursor: default; }
 </style>
 </head>
 <body>
@@ -276,6 +281,11 @@ function App() {
   const [data, setData] = useState(loadData);
   const [saveError, setSaveError] = useState(false);
   const [selectedDate, setSelectedDate] = useState(todayKey());
+  const [view, setView] = useState("log");
+  const [calendarMonth, setCalendarMonth] = useState(() => {
+    const d = new Date();
+    return { year: d.getFullYear(), month: d.getMonth() };
+  });
   const [mode, setMode] = useState("preset");
   const [kanaSelected, setKanaSelected] = useState(null);
   const [kanaIngredientId, setKanaIngredientId] = useState(null);
@@ -699,6 +709,91 @@ function App() {
     return () => { if (readerRef.current) { try { readerRef.current.reset(); } catch (e) {} } };
   }, []);
 
+  function getDayStatus(dateKey) {
+    const list = (data.entries && data.entries[dateKey]) || [];
+    if (list.length === 0) return null;
+    if (targets.kcalMin == null || targets.kcalMax == null) return null;
+    const kcal = list.reduce((s, e) => s + e.kcal, 0);
+    if (kcal < targets.kcalMin) return "under";
+    if (kcal > targets.kcalMax) return "over";
+    return "ok";
+  }
+
+  function changeMonth(delta) {
+    setCalendarMonth(({ year, month }) => {
+      let m = month + delta, y = year;
+      if (m < 0) { m = 11; y -= 1; }
+      if (m > 11) { m = 0; y += 1; }
+      return { year: y, month: m };
+    });
+  }
+
+  const calendarCells = useMemo(() => {
+    const { year, month } = calendarMonth;
+    const firstWeekday = new Date(year, month, 1).getDay();
+    const daysInMonth = new Date(year, month + 1, 0).getDate();
+    const cells = [];
+    for (let i = 0; i < firstWeekday; i++) cells.push(null);
+    for (let d = 1; d <= daysInMonth; d++) cells.push(d);
+    return cells;
+  }, [calendarMonth]);
+
+  if (view === "calendar") {
+    const { year, month } = calendarMonth;
+    const statusColors = { under: "rgba(76,107,114,0.28)", ok: "rgba(91,123,84,0.28)", over: "rgba(155,74,61,0.28)" };
+    const statusBorders = { under: "var(--indigo-soft)", ok: "var(--protein)", over: "#9B4A3D" };
+    return (
+      <div className="notebook-root">
+        <div className="nb-header">
+          <div>
+            <p className="nb-title">栄養ノート</p>
+            <p className="nb-date">カレンダー</p>
+          </div>
+          <button className="today-btn" onClick={() => setView("log")}>← 記録に戻る</button>
+        </div>
+        <div className="nb-card">
+          <div className="form-row" style={{ justifyContent: "center", marginBottom: 14 }}>
+            <button className="tab-btn" onClick={() => changeMonth(-1)}>◀</button>
+            <span style={{ fontSize: 15, fontWeight: 700, minWidth: 110, textAlign: "center" }}>{year}年{month + 1}月</span>
+            <button className="tab-btn" onClick={() => changeMonth(1)}>▶</button>
+          </div>
+          <div className="cal-grid cal-weekday-row">
+            {["日", "月", "火", "水", "木", "金", "土"].map(w => <div key={w} className="cal-weekday">{w}</div>)}
+          </div>
+          <div className="cal-grid">
+            {calendarCells.map((d, i) => {
+              if (!d) return <div key={i} className="cal-cell empty" />;
+              const dateKey = `${year}-${String(month + 1).padStart(2, "0")}-${String(d).padStart(2, "0")}`;
+              const status = getDayStatus(dateKey);
+              const isTodayCell = dateKey === todayKey();
+              return (
+                <button
+                  key={i}
+                  className="cal-cell"
+                  style={{
+                    background: status ? statusColors[status] : "transparent",
+                    border: isTodayCell ? "2px solid var(--ink)" : status ? `1px solid ${statusBorders[status]}` : "1px solid var(--line)",
+                  }}
+                  onClick={() => { setSelectedDate(dateKey); setView("log"); }}
+                >
+                  {d}
+                </button>
+              );
+            })}
+          </div>
+          <div className="legend" style={{ marginTop: 14 }}>
+            <span><i className="dot" style={{ background: "var(--indigo-soft)" }} />不足</span>
+            <span><i className="dot" style={{ background: "var(--protein)" }} />範囲内</span>
+            <span><i className="dot" style={{ background: "#9B4A3D" }} />過剰</span>
+          </div>
+          {(targets.kcalMin == null || targets.kcalMax == null) && (
+            <p className="empty-note" style={{ marginTop: 10 }}>色分けを表示するには、「⚙ 目標グラム数を編集」の計算ツールで目標カロリー範囲を設定してください。</p>
+          )}
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="notebook-root">
       <div className="nb-header">
@@ -707,6 +802,7 @@ function App() {
           <div className="nb-date-row">
             <input type="date" value={selectedDate} max={todayKey()} onChange={e => setSelectedDate(e.target.value)} />
             {!isToday && <button className="today-btn" onClick={() => setSelectedDate(todayKey())}>今日に戻る</button>}
+            <button className="today-btn" onClick={() => setView("calendar")}>📅 カレンダー</button>
           </div>
         </div>
         <div className="nb-stamp" style={kcalStatus ? { borderColor: kcalStatus.color, color: kcalStatus.color } : undefined}>
