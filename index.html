@@ -89,11 +89,6 @@
   .kana-result-btn { display: block; width: 100%; text-align: left; padding: 9px 10px; border: 1px solid var(--line); border-radius: 8px; background: #fff; margin-bottom: 6px; cursor: pointer; font-size: 13px; }
   .kana-result-btn.active { border-color: var(--indigo); background: #E8E0C9; }
   .kana-back { font-size: 12px; color: var(--indigo); background: none; border: none; padding: 0; margin-bottom: 10px; cursor: pointer; }
-  .scan-video { width: 100%; max-width: 320px; border-radius: 10px; border: 1px solid var(--line); display: block; margin: 10px auto; background: #000; }
-  .scan-hint { font-size: 11.5px; color: var(--ink-soft); text-align: center; margin: 6px 0; }
-  .scan-error { font-size: 12px; color: #9B4A3D; margin: 8px 0; }
-  .barcode-hit { background: #E8E0C9; border-radius: 8px; padding: 12px; margin-top: 10px; }
-  .barcode-hit .entry-name { font-weight: 700; }
   .cal-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 6px; }
   .cal-weekday-row { margin-bottom: 8px; }
   .cal-weekday { text-align: center; font-size: 11px; color: var(--ink-soft); }
@@ -107,7 +102,6 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.5/babel.min.js"></script>
-<script src="https://unpkg.com/@zxing/library@0.21.3/umd/index.min.js"></script>
 
 <script type="text/babel" data-presets="react">
 const { useState, useEffect, useMemo } = React;
@@ -207,50 +201,89 @@ const DEFAULT_TARGETS = { protein: 60, fat: 50, carb: 250 };
 
 // 「自分の料理」に自動で追加される定番メニュー。
 // 1度だけ追加され、以後ユーザーが削除しても再度追加されません（seedVersionで管理）。
-const CURRENT_SEED_VERSION = 1;
-const SEED_PRESETS_V1 = [
-  { name: "冷やし担々麺", unit: "1人前(丼1杯・613g)", kcal: 877, protein: 41.8, fat: 53.2, carb: 72.1 },
-  // マクドナルド：バーガー・朝マック
-  { name: "マクドナルド ハンバーガー", unit: "1個", kcal: 259, protein: 13.0, fat: 9.5, carb: 30.3 },
-  { name: "マクドナルド チーズバーガー", unit: "1個", kcal: 310, protein: 15.9, fat: 13.5, carb: 31.0 },
-  { name: "マクドナルド ダブルチーズバーガー", unit: "1個", kcal: 459, protein: 26.4, fat: 25.1, carb: 31.8 },
-  { name: "マクドナルド ビッグマック", unit: "1個", kcal: 524, protein: 26.1, fat: 28.0, carb: 42.0 },
-  { name: "マクドナルド てりやきマックバーガー", unit: "1個", kcal: 485, protein: 14.2, fat: 31.3, carb: 37.4 },
-  { name: "マクドナルド てりやきチキンフィレオ", unit: "1個", kcal: 496, protein: 20.1, fat: 23.0, carb: 52.8 },
-  { name: "マクドナルド フィレオフィッシュ", unit: "1個", kcal: 338, protein: 15.1, fat: 14.2, carb: 37.4 },
-  { name: "マクドナルド チキンフィレオ", unit: "1個", kcal: 479, protein: 19.9, fat: 23.8, carb: 47.0 },
-  { name: "マクドナルド マックチキン", unit: "1個", kcal: 386, protein: 13.5, fat: 19.6, carb: 39.5 },
-  { name: "マクドナルド チキチー(マックチキン チーズ)", unit: "1個", kcal: 436, protein: 16.4, fat: 23.6, carb: 40.3 },
-  { name: "マクドナルド えびフィレオ", unit: "1個", kcal: 408, protein: 11.4, fat: 18.6, carb: 49.5 },
-  { name: "マクドナルド エグチ(エッグチーズバーガー)", unit: "1個", kcal: 390, protein: 22.4, fat: 19.0, carb: 31.2 },
-  { name: "マクドナルド ベーコンレタスバーガー", unit: "1個", kcal: 362, protein: 17.5, fat: 19.4, carb: 30.1 },
-  { name: "マクドナルド エッグマックマフィン", unit: "1個", kcal: 310, protein: 18.6, fat: 13.6, carb: 27.2 },
-  { name: "マクドナルド ソーセージマフィン", unit: "1個", kcal: 397, protein: 15.5, fat: 25.1, carb: 27.1 },
-  { name: "マクドナルド ソーセージエッグマフィン", unit: "1個", kcal: 477, protein: 22.0, fat: 30.6, carb: 27.3 },
-  { name: "マクドナルド ホットケーキ(シロップ・パット別)", unit: "1皿", kcal: 323, protein: 8.3, fat: 9.3, carb: 53.5 },
-  // マクドナルド：サイドメニュー
-  { name: "マクドナルド マックフライポテト(S)", unit: "S", kcal: 225, protein: 3.0, fat: 11.0, carb: 28.7 },
-  { name: "マクドナルド マックフライポテト(M)", unit: "M", kcal: 410, protein: 5.5, fat: 20.0, carb: 52.4 },
-  { name: "マクドナルド マックフライポテト(L)", unit: "L", kcal: 517, protein: 7.0, fat: 25.2, carb: 66.0 },
-  { name: "マクドナルド サイドサラダ", unit: "1個", kcal: 10, protein: 0.5, fat: 0.1, carb: 2.3 },
-  { name: "マクドナルド チキンマックナゲット 5ピース", unit: "5ピース", kcal: 262, protein: 15.3, fat: 15.9, carb: 14.4 },
-  { name: "マクドナルド チキンマックナゲット 15ピース", unit: "15ピース", kcal: 786, protein: 46.0, fat: 47.8, carb: 43.2 },
-  { name: "マクドナルド ハッシュポテト", unit: "1個", kcal: 157, protein: 1.4, fat: 10.2, carb: 14.8 },
-  { name: "マクドナルド えだまめコーン", unit: "1個", kcal: 84, protein: 5.2, fat: 3.2, carb: 9.4 },
-  // マクドナルド：ドリンク(Mサイズ)
-  { name: "マクドナルド コカ・コーラ(M)", unit: "M", kcal: 145, protein: 0, fat: 0, carb: 36.5 },
-  { name: "マクドナルド コカ・コーラ ゼロ(M)", unit: "M", kcal: 0, protein: 0, fat: 0, carb: 0 },
-  { name: "マクドナルド スプライト(M)", unit: "M", kcal: 128, protein: 0, fat: 0, carb: 32.1 },
-  { name: "マクドナルド ファンタ グレープ(M)", unit: "M", kcal: 164, protein: 0, fat: 0, carb: 40.9 },
-  { name: "マクドナルド 野菜生活100(M)", unit: "M", kcal: 121, protein: 0.8, fat: 0.5, carb: 28.3 },
-  { name: "マクドナルド プレミアムローストコーヒー(M)", unit: "M", kcal: 12, protein: 0.6, fat: 0, carb: 2.1 },
-  { name: "マクドナルド カフェラテ(M)", unit: "M", kcal: 116, protein: 5.7, fat: 6.5, carb: 8.6 },
-  { name: "マクドナルド キャラメルラテ(M)", unit: "M", kcal: 168, protein: 5.8, fat: 6.5, carb: 21.5 },
-  // マクドナルド：デザート
-  { name: "マクドナルド マックフルーリー オレオクッキー", unit: "1個", kcal: 235, protein: 5.8, fat: 6.8, carb: 37.9 },
-  { name: "マクドナルド ホットアップルパイ", unit: "1個", kcal: 211, protein: 2.1, fat: 10.9, carb: 26.2 },
-  { name: "マクドナルド マックシェイク バニラ(M)", unit: "M", kcal: 367, protein: 6.8, fat: 5.7, carb: 72.2 },
+const CURRENT_SEED_VERSION = 2;
+// 「食材を選ぶ」(五十音検索)に自動登録される定番メニュー。1個あたりの栄養成分として扱う。
+const SEED_INGREDIENTS_V2 = [
+  { name: "冷やし担々麺", yomi: "ひやしたんたんめん", unitType: "piece", kcal: 877, protein: 41.8, fat: 53.2, carb: 72.1 },
+  { name: "マクドナルド ハンバーガー", yomi: "はんばーがー", unitType: "piece", kcal: 259, protein: 13.0, fat: 9.5, carb: 30.3 },
+  { name: "マクドナルド チーズバーガー", yomi: "ちーずばーがー", unitType: "piece", kcal: 310, protein: 15.9, fat: 13.5, carb: 31.0 },
+  { name: "マクドナルド ダブルチーズバーガー", yomi: "だぶるちーずばーがー", unitType: "piece", kcal: 459, protein: 26.4, fat: 25.1, carb: 31.8 },
+  { name: "マクドナルド ビッグマック", yomi: "びっぐまっく", unitType: "piece", kcal: 524, protein: 26.1, fat: 28.0, carb: 42.0 },
+  { name: "マクドナルド てりやきマックバーガー", yomi: "てりやきまっくばーがー", unitType: "piece", kcal: 485, protein: 14.2, fat: 31.3, carb: 37.4 },
+  { name: "マクドナルド てりやきチキンフィレオ", yomi: "てりやきちきんふぃれお", unitType: "piece", kcal: 496, protein: 20.1, fat: 23.0, carb: 52.8 },
+  { name: "マクドナルド フィレオフィッシュ", yomi: "ふぃれおふぃっしゅ", unitType: "piece", kcal: 338, protein: 15.1, fat: 14.2, carb: 37.4 },
+  { name: "マクドナルド チキンフィレオ", yomi: "ちきんふぃれお", unitType: "piece", kcal: 479, protein: 19.9, fat: 23.8, carb: 47.0 },
+  { name: "マクドナルド マックチキン", yomi: "まっくちきん", unitType: "piece", kcal: 386, protein: 13.5, fat: 19.6, carb: 39.5 },
+  { name: "マクドナルド チキチー(マックチキン チーズ)", yomi: "ちきちー", unitType: "piece", kcal: 436, protein: 16.4, fat: 23.6, carb: 40.3 },
+  { name: "マクドナルド えびフィレオ", yomi: "えびふぃれお", unitType: "piece", kcal: 408, protein: 11.4, fat: 18.6, carb: 49.5 },
+  { name: "マクドナルド エグチ(エッグチーズバーガー)", yomi: "えぐち", unitType: "piece", kcal: 390, protein: 22.4, fat: 19.0, carb: 31.2 },
+  { name: "マクドナルド ベーコンレタスバーガー", yomi: "べーこんれたすばーがー", unitType: "piece", kcal: 362, protein: 17.5, fat: 19.4, carb: 30.1 },
+  { name: "マクドナルド エッグマックマフィン", yomi: "えっぐまっくまふぃん", unitType: "piece", kcal: 310, protein: 18.6, fat: 13.6, carb: 27.2 },
+  { name: "マクドナルド ソーセージマフィン", yomi: "そーせーじまふぃん", unitType: "piece", kcal: 397, protein: 15.5, fat: 25.1, carb: 27.1 },
+  { name: "マクドナルド ソーセージエッグマフィン", yomi: "そーせーじえっぐまふぃん", unitType: "piece", kcal: 477, protein: 22.0, fat: 30.6, carb: 27.3 },
+  { name: "マクドナルド ホットケーキ(シロップ・パット別)", yomi: "ほっとけーき", unitType: "piece", kcal: 323, protein: 8.3, fat: 9.3, carb: 53.5 },
+  { name: "マクドナルド マックフライポテト(S)", yomi: "まっくふらいぽてと", unitType: "piece", kcal: 225, protein: 3.0, fat: 11.0, carb: 28.7 },
+  { name: "マクドナルド マックフライポテト(M)", yomi: "まっくふらいぽてと", unitType: "piece", kcal: 410, protein: 5.5, fat: 20.0, carb: 52.4 },
+  { name: "マクドナルド マックフライポテト(L)", yomi: "まっくふらいぽてと", unitType: "piece", kcal: 517, protein: 7.0, fat: 25.2, carb: 66.0 },
+  { name: "マクドナルド サイドサラダ", yomi: "さいどさらだ", unitType: "piece", kcal: 10, protein: 0.5, fat: 0.1, carb: 2.3 },
+  { name: "マクドナルド チキンマックナゲット 5ピース", yomi: "ちきんまっくなげっと", unitType: "piece", kcal: 262, protein: 15.3, fat: 15.9, carb: 14.4 },
+  { name: "マクドナルド チキンマックナゲット 15ピース", yomi: "ちきんまっくなげっと", unitType: "piece", kcal: 786, protein: 46.0, fat: 47.8, carb: 43.2 },
+  { name: "マクドナルド ハッシュポテト", yomi: "はっしゅぽてと", unitType: "piece", kcal: 157, protein: 1.4, fat: 10.2, carb: 14.8 },
+  { name: "マクドナルド えだまめコーン", yomi: "えだまめこーん", unitType: "piece", kcal: 84, protein: 5.2, fat: 3.2, carb: 9.4 },
+  { name: "マクドナルド コカ・コーラ(M)", yomi: "こかこーら", unitType: "piece", kcal: 145, protein: 0, fat: 0, carb: 36.5 },
+  { name: "マクドナルド コカ・コーラ ゼロ(M)", yomi: "こかこーらぜろ", unitType: "piece", kcal: 0, protein: 0, fat: 0, carb: 0 },
+  { name: "マクドナルド スプライト(M)", yomi: "すぷらいと", unitType: "piece", kcal: 128, protein: 0, fat: 0, carb: 32.1 },
+  { name: "マクドナルド ファンタ グレープ(M)", yomi: "ふぁんたぐれーぷ", unitType: "piece", kcal: 164, protein: 0, fat: 0, carb: 40.9 },
+  { name: "マクドナルド 野菜生活100(M)", yomi: "やさいせいかつ", unitType: "piece", kcal: 121, protein: 0.8, fat: 0.5, carb: 28.3 },
+  { name: "マクドナルド プレミアムローストコーヒー(M)", yomi: "ぷれみあむろーすとこーひー", unitType: "piece", kcal: 12, protein: 0.6, fat: 0, carb: 2.1 },
+  { name: "マクドナルド カフェラテ(M)", yomi: "かふぇらて", unitType: "piece", kcal: 116, protein: 5.7, fat: 6.5, carb: 8.6 },
+  { name: "マクドナルド キャラメルラテ(M)", yomi: "きゃらめるらて", unitType: "piece", kcal: 168, protein: 5.8, fat: 6.5, carb: 21.5 },
+  { name: "マクドナルド マックフルーリー オレオクッキー", yomi: "まっくふるーりー", unitType: "piece", kcal: 235, protein: 5.8, fat: 6.8, carb: 37.9 },
+  { name: "マクドナルド ホットアップルパイ", yomi: "ほっとあっぷるぱい", unitType: "piece", kcal: 211, protein: 2.1, fat: 10.9, carb: 26.2 },
+  { name: "マクドナルド マックシェイク バニラ(M)", yomi: "まっくしぇーくばにら", unitType: "piece", kcal: 367, protein: 6.8, fat: 5.7, carb: 72.2 },
 ];
+
+// 登録済みの料理(customPresets)を食材データベースへ移行する際に使う読み仮名。
+// わかっている範囲だけ登録し、無いものは空欄のまま移行される。
+const SEED_YOMI_LOOKUP = {
+  "冷やし担々麺": "ひやしたんたんめん",
+  "マクドナルド ハンバーガー": "まくどなるどはんばーがー",
+  "マクドナルド チーズバーガー": "まくどなるどちーずばーがー",
+  "マクドナルド ダブルチーズバーガー": "まくどなるどだぶるちーずばーがー",
+  "マクドナルド ビッグマック": "まくどなるどびっぐまっく",
+  "マクドナルド てりやきマックバーガー": "まくどなるどてりやきまっくばーがー",
+  "マクドナルド てりやきチキンフィレオ": "まくどなるどてりやきちきんふぃれお",
+  "マクドナルド フィレオフィッシュ": "まくどなるどふぃれおふぃっしゅ",
+  "マクドナルド チキンフィレオ": "まくどなるどちきんふぃれお",
+  "マクドナルド マックチキン": "まくどなるどまっくちきん",
+  "マクドナルド チキチー(マックチキン チーズ)": "まくどなるどちきちー",
+  "マクドナルド えびフィレオ": "まくどなるどえびふぃれお",
+  "マクドナルド エグチ(エッグチーズバーガー)": "まくどなるどえぐち",
+  "マクドナルド ベーコンレタスバーガー": "まくどなるどべーこんれたすばーがー",
+  "マクドナルド エッグマックマフィン": "まくどなるどえっぐまっくまふぃん",
+  "マクドナルド ソーセージマフィン": "まくどなるどそーせーじまふぃん",
+  "マクドナルド ソーセージエッグマフィン": "まくどなるどそーせーじえっぐまふぃん",
+  "マクドナルド ホットケーキ(シロップ・パット別)": "まくどなるどほっとけーき",
+  "マクドナルド マックフライポテト(S)": "まくどなるどまっくふらいぽてと",
+  "マクドナルド マックフライポテト(M)": "まくどなるどまっくふらいぽてと",
+  "マクドナルド マックフライポテト(L)": "まくどなるどまっくふらいぽてと",
+  "マクドナルド サイドサラダ": "まくどなるどさいどさらだ",
+  "マクドナルド チキンマックナゲット 5ピース": "まくどなるどちきんまっくなげっと",
+  "マクドナルド チキンマックナゲット 15ピース": "まくどなるどちきんまっくなげっと",
+  "マクドナルド ハッシュポテト": "まくどなるどはっしゅぽてと",
+  "マクドナルド えだまめコーン": "まくどなるどえだまめこーん",
+  "マクドナルド コカ・コーラ(M)": "まくどなるどこかこーら",
+  "マクドナルド コカ・コーラ ゼロ(M)": "まくどなるどこかこーらぜろ",
+  "マクドナルド スプライト(M)": "まくどなるどすぷらいと",
+  "マクドナルド ファンタ グレープ(M)": "まくどなるどふぁんたぐれーぷ",
+  "マクドナルド 野菜生活100(M)": "まくどなるどやさいせいかつ",
+  "マクドナルド プレミアムローストコーヒー(M)": "まくどなるどぷれみあむろーすとこーひー",
+  "マクドナルド カフェラテ(M)": "まくどなるどかふぇらて",
+  "マクドナルド キャラメルラテ(M)": "まくどなるどきゃらめるらて",
+  "マクドナルド マックフルーリー オレオクッキー": "まくどなるどまっくふるーりー",
+  "マクドナルド ホットアップルパイ": "まくどなるどほっとあっぷるぱい",
+  "マクドナルド マックシェイク バニラ(M)": "まくどなるどまっくしぇいく",
+};
 
 function todayKey(d = new Date()) {
   const y = d.getFullYear();
@@ -274,7 +307,7 @@ function loadData() {
     const raw = localStorage.getItem(STORAGE_KEY);
     if (raw) return JSON.parse(raw);
   } catch (e) {}
-  return { entries: {}, targets: DEFAULT_TARGETS, customPresets: [], barcodeProducts: {}, customIngredients: [], hiddenBuiltinIngredientIds: [] };
+  return { entries: {}, targets: DEFAULT_TARGETS, customPresets: [], customIngredients: [], hiddenBuiltinIngredientIds: [] };
 }
 
 function App() {
@@ -286,16 +319,13 @@ function App() {
     const d = new Date();
     return { year: d.getFullYear(), month: d.getMonth() };
   });
-  const [mode, setMode] = useState("preset");
+  const [mode, setMode] = useState("ingredient");
   const [kanaSelected, setKanaSelected] = useState(null);
+  const [yomiFixDraft, setYomiFixDraft] = useState({});
   const [kanaIngredientId, setKanaIngredientId] = useState(null);
   const [kanaGrams, setKanaGrams] = useState(100);
-  const [presetManualOpen, setPresetManualOpen] = useState(false);
-  const [presetManualForm, setPresetManualForm] = useState({ name: "", kcal: "", protein: "", fat: "", carb: "" });
   const [kanaManualOpen, setKanaManualOpen] = useState(false);
   const [kanaManualForm, setKanaManualForm] = useState({ name: "", yomi: "", unitType: "100g", kcal: "", protein: "", fat: "", carb: "", grams: 100 });
-  const [selectedPreset, setSelectedPreset] = useState((data.customPresets && data.customPresets[0] && data.customPresets[0].id) || "");
-  const [servings, setServings] = useState(1);
   const [manual, setManual] = useState({ name: "", kcal: "", protein: "", fat: "", carb: "" });
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [targetsDraft, setTargetsDraft] = useState(data.targets || DEFAULT_TARGETS);
@@ -309,16 +339,11 @@ function App() {
   const [calcRangeMax, setCalcRangeMax] = useState(500);
   const [composerOpen, setComposerOpen] = useState(false);
   const [dishName, setDishName] = useState("");
+  const [dishYomi, setDishYomi] = useState("");
   const [rows, setRows] = useState([{ id: uid(), ingredientId: INGREDIENTS[0].id, grams: 100 }]);
   const [newIngredientOpen, setNewIngredientOpen] = useState(false);
   const [newIngredient, setNewIngredient] = useState({ name: "", yomi: "", kcal: "", protein: "", fat: "", carb: "" });
   const [backupMsg, setBackupMsg] = useState(null);
-  const [scanOpen, setScanOpen] = useState(false);
-  const [scanning, setScanning] = useState(false);
-  const [scanError, setScanError] = useState(null);
-  const [scannedCode, setScannedCode] = useState(null);
-  const [newBarcodeForm, setNewBarcodeForm] = useState({ name: "", kcal: "", protein: "", fat: "", carb: "" });
-  const readerRef = React.useRef(null);
 
   function persist(next) {
     setData(next);
@@ -331,14 +356,26 @@ function App() {
   }
 
   useEffect(() => {
+    let next = data;
+    let changed = false;
+
     if ((data.seedVersion || 0) < CURRENT_SEED_VERSION) {
-      const seeded = SEED_PRESETS_V1.map(p => ({ ...p, id: uid() }));
-      persist({
-        ...data,
-        customPresets: [...(data.customPresets || []), ...seeded],
-        seedVersion: CURRENT_SEED_VERSION,
-      });
+      const seeded = SEED_INGREDIENTS_V2.map(p => ({ ...p, id: uid() }));
+      next = { ...next, customIngredients: [...(next.customIngredients || []), ...seeded], seedVersion: CURRENT_SEED_VERSION };
+      changed = true;
     }
+
+    // 以前「リストから選ぶ」用に登録した料理が残っていれば、食材データベースへ移行する
+    if ((data.customPresets || []).length > 0) {
+      const seedNames = new Set(SEED_INGREDIENTS_V2.map(s => s.name));
+      const migrated = data.customPresets
+        .filter(p => !seedNames.has(p.name))
+        .map(p => ({ id: uid(), name: p.name, yomi: "", unitType: "piece", kcal: p.kcal, protein: p.protein, fat: p.fat, carb: p.carb }));
+      next = { ...next, customIngredients: [...(next.customIngredients || []), ...migrated], customPresets: [] };
+      changed = true;
+    }
+
+    if (changed) persist(next);
     // eslint-disable-next-line
   }, []);
 
@@ -362,7 +399,6 @@ function App() {
     const pct = (v) => (total > 0 ? Math.round((v / total) * 1000) / 10 : 0);
     return { pKcal, fKcal, cKcal, total, pPct: pct(pKcal), fPct: pct(fKcal), cPct: pct(cKcal) };
   }, [targetsDraft]);
-  const customPresets = data.customPresets || [];
   const customIngredients = data.customIngredients || [];
   const hiddenBuiltinIngredientIds = data.hiddenBuiltinIngredientIds || [];
   const allIngredients = [...INGREDIENTS.filter(i => !hiddenBuiltinIngredientIds.includes(i.id)), ...customIngredients];
@@ -371,8 +407,6 @@ function App() {
     allIngredients.forEach(ing => { if (ing.yomi) set.add(normalizeKana(ing.yomi[0])); });
     return set;
   }, [allIngredients]);
-  const barcodeProducts = data.barcodeProducts || {};
-  const allPresets = [...PRESETS, ...customPresets]; // PRESETSは空なので実質customPresetsのみ
 
   const composerTotals = useMemo(() => rows.reduce((acc, row) => {
     if (row.ingredientId === "custom") {
@@ -410,18 +444,21 @@ function App() {
   function updateRow(id, field, value) { setRows(rows.map(r => r.id === id ? { ...r, [field]: value } : r)); }
   function removeRow(id) { setRows(rows.filter(r => r.id !== id)); }
 
-  function saveCustomPreset() {
+  function saveDishAsIngredient() {
     if (!dishName.trim() || rows.length === 0) return;
-    const preset = { id: uid(), name: dishName.trim(), unit: "1人前",
-      kcal: Math.round(composerTotals.kcal * 10) / 10, protein: Math.round(composerTotals.protein * 10) / 10,
-      fat: Math.round(composerTotals.fat * 10) / 10, carb: Math.round(composerTotals.carb * 10) / 10 };
-    persist({ ...data, customPresets: [...customPresets, preset] });
-    setDishName(""); setRows([{ id: uid(), ingredientId: INGREDIENTS[0].id, grams: 100 }]);
-    setSelectedPreset(preset.id); setComposerOpen(false);
-  }
-  function deleteCustomPreset(id) {
-    persist({ ...data, customPresets: customPresets.filter(p => p.id !== id) });
-    if (selectedPreset === id) setSelectedPreset((customPresets.find(p => p.id !== id) || {}).id || "");
+    const dish = {
+      id: uid(),
+      name: dishName.trim(),
+      yomi: dishYomi.trim(),
+      unitType: "piece",
+      kcal: Math.round(composerTotals.kcal * 10) / 10,
+      protein: Math.round(composerTotals.protein * 10) / 10,
+      fat: Math.round(composerTotals.fat * 10) / 10,
+      carb: Math.round(composerTotals.carb * 10) / 10,
+    };
+    persist({ ...data, customIngredients: [...customIngredients, dish] });
+    setDishName(""); setDishYomi(""); setRows([{ id: uid(), ingredientId: INGREDIENTS[0].id, grams: 100 }]);
+    setComposerOpen(false);
   }
 
   function saveCustomIngredient() {
@@ -444,6 +481,9 @@ function App() {
     persist({ ...data, customIngredients: customIngredients.filter(i => i.id !== id) });
     setRows(rows.map(r => r.ingredientId === id ? { ...r, ingredientId: INGREDIENTS[0].id } : r));
   }
+  function setIngredientYomi(id, yomi) {
+    persist({ ...data, customIngredients: customIngredients.map(i => i.id === id ? { ...i, yomi } : i) });
+  }
   function hideBuiltinIngredient(id) {
     persist({ ...data, hiddenBuiltinIngredientIds: [...hiddenBuiltinIngredientIds, id] });
     if (kanaIngredientId === id) setKanaIngredientId(null);
@@ -464,14 +504,6 @@ function App() {
     nextEntries[selectedDate] = (nextEntries[selectedDate] || []).filter(e => e.id !== id);
     persist({ ...data, entries: nextEntries });
   }
-  function handleAddPreset() {
-    const preset = allPresets.find(p => p.id === selectedPreset);
-    if (!preset) return;
-    const mult = Number(servings) || 1;
-    addEntry({ name: `${preset.name} ×${mult}`, kcal: Math.round(preset.kcal * mult * 10) / 10,
-      protein: Math.round(preset.protein * mult * 10) / 10, fat: Math.round(preset.fat * mult * 10) / 10, carb: Math.round(preset.carb * mult * 10) / 10 });
-    setServings(1);
-  }
   function handleAddManual() {
     if (!manual.name.trim()) return;
     addEntry({ name: manual.name.trim(), kcal: Number(manual.kcal) || 0, protein: Number(manual.protein) || 0, fat: Number(manual.fat) || 0, carb: Number(manual.carb) || 0 });
@@ -491,26 +523,6 @@ function App() {
     });
     setKanaIngredientId(null);
     setKanaGrams(100);
-  }
-  function handleAddPresetManual() {
-    if (!presetManualForm.name.trim()) return;
-    const preset = {
-      id: uid(),
-      name: presetManualForm.name.trim(),
-      unit: "1人前",
-      kcal: Number(presetManualForm.kcal) || 0,
-      protein: Number(presetManualForm.protein) || 0,
-      fat: Number(presetManualForm.fat) || 0,
-      carb: Number(presetManualForm.carb) || 0,
-    };
-    const nextEntries = { ...data.entries };
-    const list = nextEntries[selectedDate] ? [...nextEntries[selectedDate]] : [];
-    list.push({ id: uid(), time: new Date().toTimeString().slice(0, 5), name: preset.name, kcal: preset.kcal, protein: preset.protein, fat: preset.fat, carb: preset.carb });
-    nextEntries[selectedDate] = list;
-    persist({ ...data, entries: nextEntries, customPresets: [...customPresets, preset] });
-    setSelectedPreset(preset.id);
-    setPresetManualForm({ name: "", kcal: "", protein: "", fat: "", carb: "" });
-    setPresetManualOpen(false);
   }
   function handleAddKanaManual() {
     if (!kanaManualForm.name.trim()) return;
@@ -542,85 +554,6 @@ function App() {
     setKanaManualForm({ name: "", yomi: "", unitType: "100g", kcal: "", protein: "", fat: "", carb: "", grams: 100 });
     setKanaManualOpen(false);
   }
-  function stopScan() {
-    if (readerRef.current) {
-      try { readerRef.current.reset(); } catch (e) {}
-      readerRef.current = null;
-    }
-    setScanning(false);
-  }
-
-  function startScan() {
-    setScanError(null);
-    setScannedCode(null);
-    setNewBarcodeForm({ name: "", kcal: "", protein: "", fat: "", carb: "" });
-    if (typeof ZXing === "undefined") {
-      setScanError("バーコード読み取り機能を読み込めませんでした。通信状況をご確認の上、再読み込みしてください。");
-      return;
-    }
-    setScanning(true);
-    setTimeout(() => {
-      try {
-        const hints = new Map();
-        hints.set(ZXing.DecodeHintType.POSSIBLE_FORMATS, [
-          ZXing.BarcodeFormat.EAN_13,
-          ZXing.BarcodeFormat.EAN_8,
-          ZXing.BarcodeFormat.UPC_A,
-          ZXing.BarcodeFormat.UPC_E,
-        ]);
-        hints.set(ZXing.DecodeHintType.TRY_HARDER, true);
-        const codeReader = new ZXing.BrowserMultiFormatReader(hints);
-        readerRef.current = codeReader;
-        codeReader.decodeOnceFromVideoDevice(undefined, "barcode-video")
-          .then(result => {
-            setScannedCode(result.getText());
-            stopScan();
-          })
-          .catch(() => {
-            setScanError("カメラを起動できませんでした。カメラの使用を許可しているかご確認ください。");
-            stopScan();
-          });
-      } catch (e) {
-        setScanError("カメラを起動できませんでした。");
-        stopScan();
-      }
-    }, 50);
-  }
-
-  function addFromBarcode(code) {
-    const product = barcodeProducts[code];
-    if (!product) return;
-    addEntry({ name: product.name, kcal: product.kcal, protein: product.protein, fat: product.fat, carb: product.carb });
-    setScannedCode(null);
-    setScanOpen(false);
-  }
-
-  function saveBarcodeProduct(code) {
-    if (!newBarcodeForm.name.trim()) return;
-    const product = {
-      name: newBarcodeForm.name.trim(),
-      kcal: Number(newBarcodeForm.kcal) || 0,
-      protein: Number(newBarcodeForm.protein) || 0,
-      fat: Number(newBarcodeForm.fat) || 0,
-      carb: Number(newBarcodeForm.carb) || 0,
-    };
-    const nextBarcodeProducts = { ...barcodeProducts, [code]: product };
-    const nextEntries = { ...data.entries };
-    const list = nextEntries[selectedDate] ? [...nextEntries[selectedDate]] : [];
-    list.push({ id: uid(), time: new Date().toTimeString().slice(0, 5), name: product.name, kcal: product.kcal, protein: product.protein, fat: product.fat, carb: product.carb });
-    nextEntries[selectedDate] = list;
-    persist({ ...data, entries: nextEntries, barcodeProducts: nextBarcodeProducts });
-    setScannedCode(null);
-    setNewBarcodeForm({ name: "", kcal: "", protein: "", fat: "", carb: "" });
-    setScanOpen(false);
-  }
-
-  function deleteBarcodeProduct(code) {
-    const next = { ...barcodeProducts };
-    delete next[code];
-    persist({ ...data, barcodeProducts: next });
-  }
-
   function saveTargets() { persist({ ...data, targets: targetsDraft }); setSettingsOpen(false); }
 
   function switchCalcMode(mode) {
@@ -687,7 +620,6 @@ function App() {
           entries: parsed.entries || {},
           targets: parsed.targets || DEFAULT_TARGETS,
           customPresets: parsed.customPresets || [],
-          barcodeProducts: parsed.barcodeProducts || {},
           customIngredients: parsed.customIngredients || [],
           hiddenBuiltinIngredientIds: parsed.hiddenBuiltinIngredientIds || [],
           seedVersion: parsed.seedVersion || 0,
@@ -704,10 +636,6 @@ function App() {
   }
 
   const isToday = selectedDate === todayKey();
-
-  useEffect(() => {
-    return () => { if (readerRef.current) { try { readerRef.current.reset(); } catch (e) {} } };
-  }, []);
 
   function getDayStatus(dateKey) {
     const list = (data.entries && data.entries[dateKey]) || [];
@@ -925,45 +853,34 @@ function App() {
       <div className="nb-card">
         <p className="nb-section-title">＋ 食事を記録する</p>
         <div className="tab-row">
-          <button className={`tab-btn ${mode === "preset" ? "active" : ""}`} onClick={() => setMode("preset")}>リストから選ぶ</button>
           <button className={`tab-btn ${mode === "ingredient" ? "active" : ""}`} onClick={() => setMode("ingredient")}>食材を選ぶ</button>
           <button className={`tab-btn ${mode === "manual" ? "active" : ""}`} onClick={() => setMode("manual")}>手入力する</button>
         </div>
-        {mode === "preset" ? (
-          <div>
-            {customPresets.length === 0 ? (
-              <p className="empty-note">まだ登録された料理がありません。下の「手入力で追加する」から登録すると、次回からここに表示されます。</p>
-            ) : (
-              <div className="form-row">
-                <select value={selectedPreset} onChange={e => setSelectedPreset(e.target.value)} style={{ flex: 1, minWidth: 160 }}>
-                  {customPresets.map(p => <option key={p.id} value={p.id}>{p.name}（{p.unit}）</option>)}
-                </select>
-                <input type="number" min="0.5" step="0.5" value={servings} onChange={e => setServings(e.target.value)} style={{ width: 60 }} />
-                <span style={{ fontSize: 12.5, color: "var(--ink-soft)" }}>人前</span>
-                <button className="add-btn" style={{ marginTop: 0 }} onClick={handleAddPreset}>＋ 追加</button>
-              </div>
-            )}
-            <div style={{ marginTop: 12 }}>
-              <button className="settings-toggle" style={{ fontSize: 12.5 }} onClick={() => setPresetManualOpen(s => !s)}>✏️ 手入力で追加する（自動でリストにも登録されます）</button>
-              {presetManualOpen && (
-                <div style={{ marginTop: 8, padding: 10, background: "#fff", border: "1px solid var(--line)", borderRadius: 8 }}>
-                  <input type="text" placeholder="料理名" value={presetManualForm.name} onChange={e => setPresetManualForm({ ...presetManualForm, name: e.target.value })} style={{ width: "100%", marginBottom: 6 }} />
-                  <div className="form-grid">
-                    <input type="number" placeholder="カロリー(kcal)" value={presetManualForm.kcal} onChange={e => setPresetManualForm({ ...presetManualForm, kcal: e.target.value })} />
-                    <input type="number" placeholder="たんぱく質(g)" value={presetManualForm.protein} onChange={e => setPresetManualForm({ ...presetManualForm, protein: e.target.value })} />
-                    <input type="number" placeholder="脂質(g)" value={presetManualForm.fat} onChange={e => setPresetManualForm({ ...presetManualForm, fat: e.target.value })} />
-                    <input type="number" placeholder="炭水化物(g)" value={presetManualForm.carb} onChange={e => setPresetManualForm({ ...presetManualForm, carb: e.target.value })} />
-                  </div>
-                  <p style={{ fontSize: 11, color: "var(--ink-soft)", margin: "4px 0 0" }}>今回食べた分の栄養成分を入力してください。追加すると今日の記録に入り、次回から「リストから選ぶ」にも表示されます。</p>
-                  <button className="add-btn" onClick={handleAddPresetManual}>＋ 記録してリストに登録する</button>
-                </div>
-              )}
-            </div>
-          </div>
-        ) : mode === "ingredient" ? (
+        {mode === "ingredient" ? (
           <div>
             {!kanaSelected ? (
               <div>
+                {customIngredients.some(i => !i.yomi) && (
+                  <div style={{ marginBottom: 14, padding: 10, background: "#fff", border: "1px solid var(--line)", borderRadius: 8 }}>
+                    <p style={{ fontSize: 11.5, color: "var(--ink-soft)", margin: "0 0 8px" }}>よみがな未設定の項目（設定すると五十音検索に出るようになります）</p>
+                    {customIngredients.filter(i => !i.yomi).map(ing => (
+                      <div className="form-row" key={ing.id} style={{ marginBottom: 6 }}>
+                        <span style={{ fontSize: 12.5, flex: 1 }}>{ing.name}</span>
+                        <input
+                          type="text"
+                          placeholder="よみがな"
+                          value={yomiFixDraft[ing.id] || ""}
+                          onChange={e => setYomiFixDraft({ ...yomiFixDraft, [ing.id]: e.target.value })}
+                          style={{ width: 110 }}
+                        />
+                        <button
+                          className="tab-btn"
+                          onClick={() => { if ((yomiFixDraft[ing.id] || "").trim()) setIngredientYomi(ing.id, yomiFixDraft[ing.id].trim()); }}
+                        >保存</button>
+                      </div>
+                    ))}
+                  </div>
+                )}
                 <p className="backup-note">頭文字をタップすると、その読みで始まる食材が出てきます。</p>
                 <div className="kana-grid">
                   {KANA_ROWS.map((row, ri) => (
@@ -1069,72 +986,12 @@ function App() {
       </div>
 
       <div className="nb-card">
-        <button className="settings-toggle" onClick={() => { const next = !scanOpen; setScanOpen(next); if (!next) stopScan(); setScannedCode(null); setScanError(null); }}>
-          📷 バーコードでかんたん記録
-        </button>
-        {scanOpen && (
-          <div style={{ marginTop: 14 }}>
-            <p className="backup-note">よく買う商品を一度登録しておくと、次回からはスキャンするだけで記録できます。未登録の商品はその場で登録できます。</p>
-
-            {!scanning && !scannedCode && (
-              <button className="add-btn" style={{ marginTop: 0 }} onClick={startScan}>スキャン開始</button>
-            )}
-            {scanning && (
-              <div>
-                <video id="barcode-video" className="scan-video" muted playsInline></video>
-                <p className="scan-hint">バーコードを画面の中央に映してください</p>
-                <button className="tab-btn" onClick={stopScan}>キャンセル</button>
-              </div>
-            )}
-            {scanError && <p className="scan-error">{scanError}</p>}
-
-            {scannedCode && barcodeProducts[scannedCode] && (
-              <div className="barcode-hit">
-                <div className="entry-name">{barcodeProducts[scannedCode].name}</div>
-                <div className="entry-macro">
-                  {barcodeProducts[scannedCode].kcal}kcal ／ P{barcodeProducts[scannedCode].protein}g ・ F{barcodeProducts[scannedCode].fat}g ・ C{barcodeProducts[scannedCode].carb}g
-                </div>
-                <button className="add-btn" onClick={() => addFromBarcode(scannedCode)}>＋ この内容で記録に追加</button>
-              </div>
-            )}
-            {scannedCode && !barcodeProducts[scannedCode] && (
-              <div className="barcode-hit">
-                <p style={{ fontSize: 12.5, margin: "0 0 8px" }}>このバーコード（{scannedCode}）は未登録です。栄養情報を入力して登録すると、次回から自動で呼び出せます。</p>
-                <input type="text" placeholder="商品名" value={newBarcodeForm.name} onChange={e => setNewBarcodeForm({ ...newBarcodeForm, name: e.target.value })} style={{ width: "100%" }} />
-                <div className="form-grid">
-                  <input type="number" placeholder="カロリー(kcal)" value={newBarcodeForm.kcal} onChange={e => setNewBarcodeForm({ ...newBarcodeForm, kcal: e.target.value })} />
-                  <input type="number" placeholder="たんぱく質(g)" value={newBarcodeForm.protein} onChange={e => setNewBarcodeForm({ ...newBarcodeForm, protein: e.target.value })} />
-                  <input type="number" placeholder="脂質(g)" value={newBarcodeForm.fat} onChange={e => setNewBarcodeForm({ ...newBarcodeForm, fat: e.target.value })} />
-                  <input type="number" placeholder="炭水化物(g)" value={newBarcodeForm.carb} onChange={e => setNewBarcodeForm({ ...newBarcodeForm, carb: e.target.value })} />
-                </div>
-                <button className="add-btn" onClick={() => saveBarcodeProduct(scannedCode)}>＋ 登録して記録に追加</button>
-              </div>
-            )}
-
-            {Object.keys(barcodeProducts).length > 0 && (
-              <div style={{ marginTop: 16 }}>
-                <p style={{ fontSize: 11.5, color: "var(--ink-soft)", margin: "0 0 6px" }}>登録済みの商品</p>
-                {Object.entries(barcodeProducts).map(([code, p]) => (
-                  <div className="entry-row" key={code}>
-                    <div style={{ flex: 1 }}>
-                      <div className="entry-name">{p.name}</div>
-                      <div className="entry-macro">{p.kcal}kcal ／ P{p.protein}g ・ F{p.fat}g ・ C{p.carb}g</div>
-                    </div>
-                    <button className="del-btn" onClick={() => deleteBarcodeProduct(code)}>✕</button>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-        )}
-      </div>
-
-      <div className="nb-card">
         <button className="settings-toggle" onClick={() => setComposerOpen(s => !s)}>📝 オリジナル料理を登録する</button>
         {composerOpen && (
           <div style={{ marginTop: 14 }}>
-            <p style={{ fontSize: 11.5, color: "var(--ink-soft)", margin: "0 0 10px" }}>材料とグラム数を入れると自動で合計し、いつもの料理として保存できます。リストにない材料は「手入力する」から栄養成分を直接入力できます。</p>
-            <input type="text" placeholder="料理名" value={dishName} onChange={e => setDishName(e.target.value)} style={{ width: "100%", marginBottom: 10 }} />
+            <p style={{ fontSize: 11.5, color: "var(--ink-soft)", margin: "0 0 10px" }}>材料とグラム数を入れると自動で合計し、「食材を選ぶ」からいつでも呼び出せる料理として保存できます。リストにない材料は「手入力する」から栄養成分を直接入力できます。</p>
+            <input type="text" placeholder="料理名" value={dishName} onChange={e => setDishName(e.target.value)} style={{ width: "100%", marginBottom: 6 }} />
+            <input type="text" placeholder="よみがな（ひらがな・例：ひやしたんたんめん）" value={dishYomi} onChange={e => setDishYomi(e.target.value)} style={{ width: "100%", marginBottom: 10 }} />
             {rows.map(row => (
               <div key={row.id} style={{ marginBottom: 8 }}>
                 <div className="form-row" style={{ marginBottom: row.ingredientId === "custom" ? 6 : 0 }}>
@@ -1237,21 +1094,7 @@ function App() {
             </div>
 
             <div className="composer-total">合計：{Math.round(composerTotals.kcal)}kcal ／ P{Math.round(composerTotals.protein * 10) / 10}g ・ F{Math.round(composerTotals.fat * 10) / 10}g ・ C{Math.round(composerTotals.carb * 10) / 10}g</div>
-            <button className="add-btn" onClick={saveCustomPreset}>＋ この料理をリストに保存</button>
-            {customPresets.length > 0 && (
-              <div style={{ marginTop: 16 }}>
-                <p style={{ fontSize: 11.5, color: "var(--ink-soft)", margin: "0 0 6px" }}>登録済みの料理</p>
-                {customPresets.map(p => (
-                  <div className="entry-row" key={p.id}>
-                    <div style={{ flex: 1 }}>
-                      <div className="entry-name">{p.name}</div>
-                      <div className="entry-macro">{p.kcal}kcal ／ P{p.protein}g ・ F{p.fat}g ・ C{p.carb}g</div>
-                    </div>
-                    <button className="del-btn" onClick={() => deleteCustomPreset(p.id)}>✕</button>
-                  </div>
-                ))}
-              </div>
-            )}
+            <button className="add-btn" onClick={saveDishAsIngredient}>＋ この料理を「食材を選ぶ」に登録する</button>
           </div>
         )}
       </div>
