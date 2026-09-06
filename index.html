@@ -205,42 +205,42 @@ const CURRENT_SEED_VERSION = 2;
 // 「食材を選ぶ」(五十音検索)に自動登録される定番メニュー。1個あたりの栄養成分として扱う。
 const SEED_INGREDIENTS_V2 = [
   { name: "冷やし担々麺", yomi: "ひやしたんたんめん", unitType: "piece", kcal: 877, protein: 41.8, fat: 53.2, carb: 72.1 },
-  { name: "マクドナルド ハンバーガー", yomi: "はんばーがー", unitType: "piece", kcal: 259, protein: 13.0, fat: 9.5, carb: 30.3 },
-  { name: "マクドナルド チーズバーガー", yomi: "ちーずばーがー", unitType: "piece", kcal: 310, protein: 15.9, fat: 13.5, carb: 31.0 },
-  { name: "マクドナルド ダブルチーズバーガー", yomi: "だぶるちーずばーがー", unitType: "piece", kcal: 459, protein: 26.4, fat: 25.1, carb: 31.8 },
-  { name: "マクドナルド ビッグマック", yomi: "びっぐまっく", unitType: "piece", kcal: 524, protein: 26.1, fat: 28.0, carb: 42.0 },
-  { name: "マクドナルド てりやきマックバーガー", yomi: "てりやきまっくばーがー", unitType: "piece", kcal: 485, protein: 14.2, fat: 31.3, carb: 37.4 },
-  { name: "マクドナルド てりやきチキンフィレオ", yomi: "てりやきちきんふぃれお", unitType: "piece", kcal: 496, protein: 20.1, fat: 23.0, carb: 52.8 },
-  { name: "マクドナルド フィレオフィッシュ", yomi: "ふぃれおふぃっしゅ", unitType: "piece", kcal: 338, protein: 15.1, fat: 14.2, carb: 37.4 },
-  { name: "マクドナルド チキンフィレオ", yomi: "ちきんふぃれお", unitType: "piece", kcal: 479, protein: 19.9, fat: 23.8, carb: 47.0 },
-  { name: "マクドナルド マックチキン", yomi: "まっくちきん", unitType: "piece", kcal: 386, protein: 13.5, fat: 19.6, carb: 39.5 },
-  { name: "マクドナルド チキチー(マックチキン チーズ)", yomi: "ちきちー", unitType: "piece", kcal: 436, protein: 16.4, fat: 23.6, carb: 40.3 },
-  { name: "マクドナルド えびフィレオ", yomi: "えびふぃれお", unitType: "piece", kcal: 408, protein: 11.4, fat: 18.6, carb: 49.5 },
-  { name: "マクドナルド エグチ(エッグチーズバーガー)", yomi: "えぐち", unitType: "piece", kcal: 390, protein: 22.4, fat: 19.0, carb: 31.2 },
-  { name: "マクドナルド ベーコンレタスバーガー", yomi: "べーこんれたすばーがー", unitType: "piece", kcal: 362, protein: 17.5, fat: 19.4, carb: 30.1 },
-  { name: "マクドナルド エッグマックマフィン", yomi: "えっぐまっくまふぃん", unitType: "piece", kcal: 310, protein: 18.6, fat: 13.6, carb: 27.2 },
-  { name: "マクドナルド ソーセージマフィン", yomi: "そーせーじまふぃん", unitType: "piece", kcal: 397, protein: 15.5, fat: 25.1, carb: 27.1 },
-  { name: "マクドナルド ソーセージエッグマフィン", yomi: "そーせーじえっぐまふぃん", unitType: "piece", kcal: 477, protein: 22.0, fat: 30.6, carb: 27.3 },
-  { name: "マクドナルド ホットケーキ(シロップ・パット別)", yomi: "ほっとけーき", unitType: "piece", kcal: 323, protein: 8.3, fat: 9.3, carb: 53.5 },
-  { name: "マクドナルド マックフライポテト(S)", yomi: "まっくふらいぽてと", unitType: "piece", kcal: 225, protein: 3.0, fat: 11.0, carb: 28.7 },
-  { name: "マクドナルド マックフライポテト(M)", yomi: "まっくふらいぽてと", unitType: "piece", kcal: 410, protein: 5.5, fat: 20.0, carb: 52.4 },
-  { name: "マクドナルド マックフライポテト(L)", yomi: "まっくふらいぽてと", unitType: "piece", kcal: 517, protein: 7.0, fat: 25.2, carb: 66.0 },
-  { name: "マクドナルド サイドサラダ", yomi: "さいどさらだ", unitType: "piece", kcal: 10, protein: 0.5, fat: 0.1, carb: 2.3 },
-  { name: "マクドナルド チキンマックナゲット 5ピース", yomi: "ちきんまっくなげっと", unitType: "piece", kcal: 262, protein: 15.3, fat: 15.9, carb: 14.4 },
-  { name: "マクドナルド チキンマックナゲット 15ピース", yomi: "ちきんまっくなげっと", unitType: "piece", kcal: 786, protein: 46.0, fat: 47.8, carb: 43.2 },
-  { name: "マクドナルド ハッシュポテト", yomi: "はっしゅぽてと", unitType: "piece", kcal: 157, protein: 1.4, fat: 10.2, carb: 14.8 },
-  { name: "マクドナルド えだまめコーン", yomi: "えだまめこーん", unitType: "piece", kcal: 84, protein: 5.2, fat: 3.2, carb: 9.4 },
-  { name: "マクドナルド コカ・コーラ(M)", yomi: "こかこーら", unitType: "piece", kcal: 145, protein: 0, fat: 0, carb: 36.5 },
-  { name: "マクドナルド コカ・コーラ ゼロ(M)", yomi: "こかこーらぜろ", unitType: "piece", kcal: 0, protein: 0, fat: 0, carb: 0 },
-  { name: "マクドナルド スプライト(M)", yomi: "すぷらいと", unitType: "piece", kcal: 128, protein: 0, fat: 0, carb: 32.1 },
-  { name: "マクドナルド ファンタ グレープ(M)", yomi: "ふぁんたぐれーぷ", unitType: "piece", kcal: 164, protein: 0, fat: 0, carb: 40.9 },
-  { name: "マクドナルド 野菜生活100(M)", yomi: "やさいせいかつ", unitType: "piece", kcal: 121, protein: 0.8, fat: 0.5, carb: 28.3 },
-  { name: "マクドナルド プレミアムローストコーヒー(M)", yomi: "ぷれみあむろーすとこーひー", unitType: "piece", kcal: 12, protein: 0.6, fat: 0, carb: 2.1 },
-  { name: "マクドナルド カフェラテ(M)", yomi: "かふぇらて", unitType: "piece", kcal: 116, protein: 5.7, fat: 6.5, carb: 8.6 },
-  { name: "マクドナルド キャラメルラテ(M)", yomi: "きゃらめるらて", unitType: "piece", kcal: 168, protein: 5.8, fat: 6.5, carb: 21.5 },
-  { name: "マクドナルド マックフルーリー オレオクッキー", yomi: "まっくふるーりー", unitType: "piece", kcal: 235, protein: 5.8, fat: 6.8, carb: 37.9 },
-  { name: "マクドナルド ホットアップルパイ", yomi: "ほっとあっぷるぱい", unitType: "piece", kcal: 211, protein: 2.1, fat: 10.9, carb: 26.2 },
-  { name: "マクドナルド マックシェイク バニラ(M)", yomi: "まっくしぇーくばにら", unitType: "piece", kcal: 367, protein: 6.8, fat: 5.7, carb: 72.2 },
+  { name: "マクドナルド ハンバーガー", yomi: "まくどなるどはんばーがー", unitType: "piece", kcal: 259, protein: 13.0, fat: 9.5, carb: 30.3 },
+  { name: "マクドナルド チーズバーガー", yomi: "まくどなるどちーずばーがー", unitType: "piece", kcal: 310, protein: 15.9, fat: 13.5, carb: 31.0 },
+  { name: "マクドナルド ダブルチーズバーガー", yomi: "まくどなるどだぶるちーずばーがー", unitType: "piece", kcal: 459, protein: 26.4, fat: 25.1, carb: 31.8 },
+  { name: "マクドナルド ビッグマック", yomi: "まくどなるどびっぐまっく", unitType: "piece", kcal: 524, protein: 26.1, fat: 28.0, carb: 42.0 },
+  { name: "マクドナルド てりやきマックバーガー", yomi: "まくどなるどてりやきまっくばーがー", unitType: "piece", kcal: 485, protein: 14.2, fat: 31.3, carb: 37.4 },
+  { name: "マクドナルド てりやきチキンフィレオ", yomi: "まくどなるどてりやきちきんふぃれお", unitType: "piece", kcal: 496, protein: 20.1, fat: 23.0, carb: 52.8 },
+  { name: "マクドナルド フィレオフィッシュ", yomi: "まくどなるどふぃれおふぃっしゅ", unitType: "piece", kcal: 338, protein: 15.1, fat: 14.2, carb: 37.4 },
+  { name: "マクドナルド チキンフィレオ", yomi: "まくどなるどちきんふぃれお", unitType: "piece", kcal: 479, protein: 19.9, fat: 23.8, carb: 47.0 },
+  { name: "マクドナルド マックチキン", yomi: "まくどなるどまっくちきん", unitType: "piece", kcal: 386, protein: 13.5, fat: 19.6, carb: 39.5 },
+  { name: "マクドナルド チキチー(マックチキン チーズ)", yomi: "まくどなるどちきちー", unitType: "piece", kcal: 436, protein: 16.4, fat: 23.6, carb: 40.3 },
+  { name: "マクドナルド えびフィレオ", yomi: "まくどなるどえびふぃれお", unitType: "piece", kcal: 408, protein: 11.4, fat: 18.6, carb: 49.5 },
+  { name: "マクドナルド エグチ(エッグチーズバーガー)", yomi: "まくどなるどえぐち", unitType: "piece", kcal: 390, protein: 22.4, fat: 19.0, carb: 31.2 },
+  { name: "マクドナルド ベーコンレタスバーガー", yomi: "まくどなるどべーこんれたすばーがー", unitType: "piece", kcal: 362, protein: 17.5, fat: 19.4, carb: 30.1 },
+  { name: "マクドナルド エッグマックマフィン", yomi: "まくどなるどえっぐまっくまふぃん", unitType: "piece", kcal: 310, protein: 18.6, fat: 13.6, carb: 27.2 },
+  { name: "マクドナルド ソーセージマフィン", yomi: "まくどなるどそーせーじまふぃん", unitType: "piece", kcal: 397, protein: 15.5, fat: 25.1, carb: 27.1 },
+  { name: "マクドナルド ソーセージエッグマフィン", yomi: "まくどなるどそーせーじえっぐまふぃん", unitType: "piece", kcal: 477, protein: 22.0, fat: 30.6, carb: 27.3 },
+  { name: "マクドナルド ホットケーキ(シロップ・パット別)", yomi: "まくどなるどほっとけーき", unitType: "piece", kcal: 323, protein: 8.3, fat: 9.3, carb: 53.5 },
+  { name: "マクドナルド マックフライポテト(S)", yomi: "まくどなるどまっくふらいぽてと", unitType: "piece", kcal: 225, protein: 3.0, fat: 11.0, carb: 28.7 },
+  { name: "マクドナルド マックフライポテト(M)", yomi: "まくどなるどまっくふらいぽてと", unitType: "piece", kcal: 410, protein: 5.5, fat: 20.0, carb: 52.4 },
+  { name: "マクドナルド マックフライポテト(L)", yomi: "まくどなるどまっくふらいぽてと", unitType: "piece", kcal: 517, protein: 7.0, fat: 25.2, carb: 66.0 },
+  { name: "マクドナルド サイドサラダ", yomi: "まくどなるどさいどさらだ", unitType: "piece", kcal: 10, protein: 0.5, fat: 0.1, carb: 2.3 },
+  { name: "マクドナルド チキンマックナゲット 5ピース", yomi: "まくどなるどちきんまっくなげっと", unitType: "piece", kcal: 262, protein: 15.3, fat: 15.9, carb: 14.4 },
+  { name: "マクドナルド チキンマックナゲット 15ピース", yomi: "まくどなるどちきんまっくなげっと", unitType: "piece", kcal: 786, protein: 46.0, fat: 47.8, carb: 43.2 },
+  { name: "マクドナルド ハッシュポテト", yomi: "まくどなるどはっしゅぽてと", unitType: "piece", kcal: 157, protein: 1.4, fat: 10.2, carb: 14.8 },
+  { name: "マクドナルド えだまめコーン", yomi: "まくどなるどえだまめこーん", unitType: "piece", kcal: 84, protein: 5.2, fat: 3.2, carb: 9.4 },
+  { name: "マクドナルド コカ・コーラ(M)", yomi: "まくどなるどこかこーら", unitType: "piece", kcal: 145, protein: 0, fat: 0, carb: 36.5 },
+  { name: "マクドナルド コカ・コーラ ゼロ(M)", yomi: "まくどなるどこかこーらぜろ", unitType: "piece", kcal: 0, protein: 0, fat: 0, carb: 0 },
+  { name: "マクドナルド スプライト(M)", yomi: "まくどなるどすぷらいと", unitType: "piece", kcal: 128, protein: 0, fat: 0, carb: 32.1 },
+  { name: "マクドナルド ファンタ グレープ(M)", yomi: "まくどなるどふぁんたぐれーぷ", unitType: "piece", kcal: 164, protein: 0, fat: 0, carb: 40.9 },
+  { name: "マクドナルド 野菜生活100(M)", yomi: "まくどなるどやさいせいかつ", unitType: "piece", kcal: 121, protein: 0.8, fat: 0.5, carb: 28.3 },
+  { name: "マクドナルド プレミアムローストコーヒー(M)", yomi: "まくどなるどぷれみあむろーすとこーひー", unitType: "piece", kcal: 12, protein: 0.6, fat: 0, carb: 2.1 },
+  { name: "マクドナルド カフェラテ(M)", yomi: "まくどなるどかふぇらて", unitType: "piece", kcal: 116, protein: 5.7, fat: 6.5, carb: 8.6 },
+  { name: "マクドナルド キャラメルラテ(M)", yomi: "まくどなるどきゃらめるらて", unitType: "piece", kcal: 168, protein: 5.8, fat: 6.5, carb: 21.5 },
+  { name: "マクドナルド マックフルーリー オレオクッキー", yomi: "まくどなるどまっくふるーりー", unitType: "piece", kcal: 235, protein: 5.8, fat: 6.8, carb: 37.9 },
+  { name: "マクドナルド ホットアップルパイ", yomi: "まくどなるどほっとあっぷるぱい", unitType: "piece", kcal: 211, protein: 2.1, fat: 10.9, carb: 26.2 },
+  { name: "マクドナルド マックシェイク バニラ(M)", yomi: "まくどなるどまっくしぇーくばにら", unitType: "piece", kcal: 367, protein: 6.8, fat: 5.7, carb: 72.2 },
 ];
 
 // 登録済みの料理(customPresets)を食材データベースへ移行する際に使う読み仮名。
@@ -373,6 +373,17 @@ function App() {
         .map(p => ({ id: uid(), name: p.name, yomi: "", unitType: "piece", kcal: p.kcal, protein: p.protein, fat: p.fat, carb: p.carb }));
       next = { ...next, customIngredients: [...(next.customIngredients || []), ...migrated], customPresets: [] };
       changed = true;
+    }
+
+    // 既に登録済みの定番メニューの読み仮名が最新でなければ揃え直す（例：マクドナルド系を「ま」に統一）
+    {
+      const seedYomiByName = Object.fromEntries(SEED_INGREDIENTS_V2.map(s => [s.name, s.yomi]));
+      const current = next.customIngredients || [];
+      const needsFix = current.some(i => seedYomiByName[i.name] && i.yomi !== seedYomiByName[i.name]);
+      if (needsFix) {
+        next = { ...next, customIngredients: current.map(i => seedYomiByName[i.name] && i.yomi !== seedYomiByName[i.name] ? { ...i, yomi: seedYomiByName[i.name] } : i) };
+        changed = true;
+      }
     }
 
     if (changed) persist(next);
