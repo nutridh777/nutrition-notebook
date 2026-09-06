@@ -194,14 +194,18 @@ function normalizeKana(ch) {
 
 function ingredientFactor(ing, amount) {
   const n = Number(amount) || 0;
-  return ing && ing.unitType === "piece" ? n : n / 100;
+  return ing && ing.unitType && ing.unitType !== "100g" ? n : n / 100;
 }
+const UNIT_SHORT_LABEL = { "100g": "g", piece: "個", tbsp: "大さじ", tsp: "小さじ" };
+const UNIT_LONG_LABEL = { "100g": "100gあたり", piece: "1個あたり", tbsp: "大さじ1あたり", tsp: "小さじ1あたり" };
+function unitShortLabel(unitType) { return UNIT_SHORT_LABEL[unitType] || "g"; }
+function unitLongLabel(unitType) { return UNIT_LONG_LABEL[unitType] || "100gあたり"; }
 
 const DEFAULT_TARGETS = { protein: 60, fat: 50, carb: 250 };
 
 // 「自分の料理」に自動で追加される定番メニュー。
 // 1度だけ追加され、以後ユーザーが削除しても再度追加されません（seedVersionで管理）。
-const CURRENT_SEED_VERSION = 2;
+const CURRENT_SEED_VERSION = 3;
 // 「食材を選ぶ」(五十音検索)に自動登録される定番メニュー。1個あたりの栄養成分として扱う。
 const SEED_INGREDIENTS_V2 = [
   { name: "冷やし担々麺", yomi: "ひやしたんたんめん", unitType: "piece", kcal: 877, protein: 41.8, fat: 53.2, carb: 72.1 },
@@ -241,6 +245,8 @@ const SEED_INGREDIENTS_V2 = [
   { name: "マクドナルド マックフルーリー オレオクッキー", yomi: "まくどなるどまっくふるーりー", unitType: "piece", kcal: 235, protein: 5.8, fat: 6.8, carb: 37.9 },
   { name: "マクドナルド ホットアップルパイ", yomi: "まくどなるどほっとあっぷるぱい", unitType: "piece", kcal: 211, protein: 2.1, fat: 10.9, carb: 26.2 },
   { name: "マクドナルド マックシェイク バニラ(M)", yomi: "まくどなるどまっくしぇーくばにら", unitType: "piece", kcal: 367, protein: 6.8, fat: 5.7, carb: 72.2 },
+  { name: "唐揚げ", yomi: "からあげ", unitType: "100g", kcal: 277, protein: 13.5, fat: 23.6, carb: 3.7 },
+  { name: "豚汁", yomi: "とんじる", unitType: "piece", kcal: 116, protein: 5.8, fat: 8.7, carb: 5.2 },
 ];
 
 // 登録済みの料理(customPresets)を食材データベースへ移行する際に使う読み仮名。
@@ -342,7 +348,7 @@ function App() {
   const [dishYomi, setDishYomi] = useState("");
   const [rows, setRows] = useState([{ id: uid(), ingredientId: INGREDIENTS[0].id, grams: 100 }]);
   const [newIngredientOpen, setNewIngredientOpen] = useState(false);
-  const [newIngredient, setNewIngredient] = useState({ name: "", yomi: "", kcal: "", protein: "", fat: "", carb: "" });
+  const [newIngredient, setNewIngredient] = useState({ name: "", yomi: "", unitType: "100g", kcal: "", protein: "", fat: "", carb: "" });
   const [backupMsg, setBackupMsg] = useState(null);
 
   function persist(next) {
@@ -360,7 +366,8 @@ function App() {
     let changed = false;
 
     if ((data.seedVersion || 0) < CURRENT_SEED_VERSION) {
-      const seeded = SEED_INGREDIENTS_V2.map(p => ({ ...p, id: uid() }));
+      const existingNames = new Set((data.customIngredients || []).map(i => i.name));
+      const seeded = SEED_INGREDIENTS_V2.filter(p => !existingNames.has(p.name)).map(p => ({ ...p, id: uid() }));
       next = { ...next, customIngredients: [...(next.customIngredients || []), ...seeded], seedVersion: CURRENT_SEED_VERSION };
       changed = true;
     }
@@ -478,13 +485,14 @@ function App() {
       id: uid(),
       name: newIngredient.name.trim(),
       yomi: newIngredient.yomi.trim(),
+      unitType: newIngredient.unitType,
       kcal: Number(newIngredient.kcal) || 0,
       protein: Number(newIngredient.protein) || 0,
       fat: Number(newIngredient.fat) || 0,
       carb: Number(newIngredient.carb) || 0,
     };
     persist({ ...data, customIngredients: [...customIngredients, ing] });
-    setNewIngredient({ name: "", yomi: "", kcal: "", protein: "", fat: "", carb: "" });
+    setNewIngredient({ name: "", yomi: "", unitType: "100g", kcal: "", protein: "", fat: "", carb: "" });
     setNewIngredientOpen(false);
   }
 
@@ -524,7 +532,7 @@ function App() {
     const ing = allIngredients.find(i => i.id === kanaIngredientId);
     if (!ing) return;
     const factor = ingredientFactor(ing, kanaGrams);
-    const unitLabel = ing.unitType === "piece" ? "個" : "g";
+    const unitLabel = unitShortLabel(ing.unitType);
     addEntry({
       name: `${ing.name} ${kanaGrams}${unitLabel}`,
       kcal: Math.round(ing.kcal * factor * 10) / 10,
@@ -548,7 +556,7 @@ function App() {
       carb: Number(kanaManualForm.carb) || 0,
     };
     const factor = ingredientFactor(ing, kanaManualForm.grams);
-    const unitLabel = kanaManualForm.unitType === "piece" ? "個" : "g";
+    const unitLabel = unitShortLabel(kanaManualForm.unitType);
     const nextEntries = { ...data.entries };
     const list = nextEntries[selectedDate] ? [...nextEntries[selectedDate]] : [];
     list.push({
@@ -925,7 +933,7 @@ function App() {
                           onClick={() => setKanaIngredientId(ing.id)}
                         >
                           {ing.name}
-                          <span style={{ color: "var(--ink-soft)", fontSize: 11 }}> （{ing.unitType === "piece" ? "1個あたり" : "100gあたり"} {ing.kcal}kcal・P{ing.protein}g・F{ing.fat}g・C{ing.carb}g）</span>
+                          <span style={{ color: "var(--ink-soft)", fontSize: 11 }}> （{unitLongLabel(ing.unitType)} {ing.kcal}kcal・P{ing.protein}g・F{ing.fat}g・C{ing.carb}g）</span>
                         </button>
                         {isCustom ? (
                           <button
@@ -944,7 +952,7 @@ function App() {
                 })()}
                 {kanaIngredientId && (() => {
                   const selectedIng = allIngredients.find(i => i.id === kanaIngredientId);
-                  const unitLabel = selectedIng && selectedIng.unitType === "piece" ? "個" : "g";
+                  const unitLabel = unitShortLabel(selectedIng && selectedIng.unitType);
                   return (
                     <div className="form-row" style={{ marginTop: 8 }}>
                       <input type="number" value={kanaGrams} onChange={e => setKanaGrams(e.target.value)} style={{ width: 70 }} />
@@ -964,19 +972,21 @@ function App() {
                   <div className="tab-row" style={{ marginBottom: 8 }}>
                     <button className={`tab-btn ${kanaManualForm.unitType === "100g" ? "active" : ""}`} onClick={() => setKanaManualForm({ ...kanaManualForm, unitType: "100g" })}>100gあたり</button>
                     <button className={`tab-btn ${kanaManualForm.unitType === "piece" ? "active" : ""}`} onClick={() => setKanaManualForm({ ...kanaManualForm, unitType: "piece" })}>1個あたり</button>
+                    <button className={`tab-btn ${kanaManualForm.unitType === "tbsp" ? "active" : ""}`} onClick={() => setKanaManualForm({ ...kanaManualForm, unitType: "tbsp" })}>大さじ1あたり</button>
+                    <button className={`tab-btn ${kanaManualForm.unitType === "tsp" ? "active" : ""}`} onClick={() => setKanaManualForm({ ...kanaManualForm, unitType: "tsp" })}>小さじ1あたり</button>
                   </div>
                   <div className="form-grid">
-                    <input type="number" placeholder={kanaManualForm.unitType === "piece" ? "カロリー(kcal/個)" : "カロリー(kcal/100g)"} value={kanaManualForm.kcal} onChange={e => setKanaManualForm({ ...kanaManualForm, kcal: e.target.value })} />
-                    <input type="number" placeholder={kanaManualForm.unitType === "piece" ? "たんぱく質(g/個)" : "たんぱく質(g/100g)"} value={kanaManualForm.protein} onChange={e => setKanaManualForm({ ...kanaManualForm, protein: e.target.value })} />
-                    <input type="number" placeholder={kanaManualForm.unitType === "piece" ? "脂質(g/個)" : "脂質(g/100g)"} value={kanaManualForm.fat} onChange={e => setKanaManualForm({ ...kanaManualForm, fat: e.target.value })} />
-                    <input type="number" placeholder={kanaManualForm.unitType === "piece" ? "炭水化物(g/個)" : "炭水化物(g/100g)"} value={kanaManualForm.carb} onChange={e => setKanaManualForm({ ...kanaManualForm, carb: e.target.value })} />
+                    <input type="number" placeholder={`カロリー(kcal/${unitShortLabel(kanaManualForm.unitType)})`} value={kanaManualForm.kcal} onChange={e => setKanaManualForm({ ...kanaManualForm, kcal: e.target.value })} />
+                    <input type="number" placeholder={`たんぱく質(g/${unitShortLabel(kanaManualForm.unitType)})`} value={kanaManualForm.protein} onChange={e => setKanaManualForm({ ...kanaManualForm, protein: e.target.value })} />
+                    <input type="number" placeholder={`脂質(g/${unitShortLabel(kanaManualForm.unitType)})`} value={kanaManualForm.fat} onChange={e => setKanaManualForm({ ...kanaManualForm, fat: e.target.value })} />
+                    <input type="number" placeholder={`炭水化物(g/${unitShortLabel(kanaManualForm.unitType)})`} value={kanaManualForm.carb} onChange={e => setKanaManualForm({ ...kanaManualForm, carb: e.target.value })} />
                   </div>
                   <div className="form-row" style={{ marginTop: 6 }}>
-                    <span style={{ fontSize: 12.5, color: "var(--ink-soft)" }}>今回食べた量</span>
+                    <span style={{ fontSize: 12.5, color: "var(--ink-soft)" }}>今回使った量</span>
                     <input type="number" value={kanaManualForm.grams} onChange={e => setKanaManualForm({ ...kanaManualForm, grams: e.target.value })} style={{ width: 70 }} />
-                    <span style={{ fontSize: 12.5, color: "var(--ink-soft)" }}>{kanaManualForm.unitType === "piece" ? "個" : "g"}</span>
+                    <span style={{ fontSize: 12.5, color: "var(--ink-soft)" }}>{unitShortLabel(kanaManualForm.unitType)}</span>
                   </div>
-                  <p style={{ fontSize: 11, color: "var(--ink-soft)", margin: "4px 0 0" }}>{kanaManualForm.unitType === "piece" ? "1個あたりの栄養成分" : "100gあたりの栄養成分"}とよみがなを入れてください。追加すると今日の記録に入り、次回から五十音検索でも見つけられるようになります。</p>
+                  <p style={{ fontSize: 11, color: "var(--ink-soft)", margin: "4px 0 0" }}>{unitLongLabel(kanaManualForm.unitType)}の栄養成分とよみがなを入れてください。追加すると今日の記録に入り、次回から五十音検索でも見つけられるようになります。</p>
                   <button className="add-btn" onClick={handleAddKanaManual}>＋ 記録してリストに登録する</button>
                 </div>
               )}
@@ -1012,7 +1022,7 @@ function App() {
                   </select>
                   {row.ingredientId !== "custom" && (() => {
                     const rowIng = allIngredients.find(i => i.id === row.ingredientId);
-                    const unitLabel = rowIng && rowIng.unitType === "piece" ? "個" : "g";
+                    const unitLabel = unitShortLabel(rowIng && rowIng.unitType);
                     return (
                       <React.Fragment>
                         <input type="number" value={row.grams} onChange={e => updateRow(row.id, "grams", e.target.value)} style={{ width: 70 }} />
@@ -1064,13 +1074,19 @@ function App() {
                     onChange={e => setNewIngredient({ ...newIngredient, yomi: e.target.value })}
                     style={{ width: "100%", marginBottom: 6 }}
                   />
-                  <div className="form-grid">
-                    <input type="number" placeholder="カロリー(kcal/100g)" value={newIngredient.kcal} onChange={e => setNewIngredient({ ...newIngredient, kcal: e.target.value })} />
-                    <input type="number" placeholder="たんぱく質(g/100g)" value={newIngredient.protein} onChange={e => setNewIngredient({ ...newIngredient, protein: e.target.value })} />
-                    <input type="number" placeholder="脂質(g/100g)" value={newIngredient.fat} onChange={e => setNewIngredient({ ...newIngredient, fat: e.target.value })} />
-                    <input type="number" placeholder="炭水化物(g/100g)" value={newIngredient.carb} onChange={e => setNewIngredient({ ...newIngredient, carb: e.target.value })} />
+                  <div className="tab-row" style={{ marginBottom: 8 }}>
+                    <button className={`tab-btn ${newIngredient.unitType === "100g" ? "active" : ""}`} onClick={() => setNewIngredient({ ...newIngredient, unitType: "100g" })}>100gあたり</button>
+                    <button className={`tab-btn ${newIngredient.unitType === "piece" ? "active" : ""}`} onClick={() => setNewIngredient({ ...newIngredient, unitType: "piece" })}>1個あたり</button>
+                    <button className={`tab-btn ${newIngredient.unitType === "tbsp" ? "active" : ""}`} onClick={() => setNewIngredient({ ...newIngredient, unitType: "tbsp" })}>大さじ1あたり</button>
+                    <button className={`tab-btn ${newIngredient.unitType === "tsp" ? "active" : ""}`} onClick={() => setNewIngredient({ ...newIngredient, unitType: "tsp" })}>小さじ1あたり</button>
                   </div>
-                  <p style={{ fontSize: 11, color: "var(--ink-soft)", margin: "4px 0 0" }}>※100gあたりの栄養成分を入力してください。よみがなを入れておくと、「食材を選ぶ」の五十音検索でも見つけやすくなります。</p>
+                  <div className="form-grid">
+                    <input type="number" placeholder={`カロリー(kcal/${unitShortLabel(newIngredient.unitType)})`} value={newIngredient.kcal} onChange={e => setNewIngredient({ ...newIngredient, kcal: e.target.value })} />
+                    <input type="number" placeholder={`たんぱく質(g/${unitShortLabel(newIngredient.unitType)})`} value={newIngredient.protein} onChange={e => setNewIngredient({ ...newIngredient, protein: e.target.value })} />
+                    <input type="number" placeholder={`脂質(g/${unitShortLabel(newIngredient.unitType)})`} value={newIngredient.fat} onChange={e => setNewIngredient({ ...newIngredient, fat: e.target.value })} />
+                    <input type="number" placeholder={`炭水化物(g/${unitShortLabel(newIngredient.unitType)})`} value={newIngredient.carb} onChange={e => setNewIngredient({ ...newIngredient, carb: e.target.value })} />
+                  </div>
+                  <p style={{ fontSize: 11, color: "var(--ink-soft)", margin: "4px 0 0" }}>※{unitLongLabel(newIngredient.unitType)}の栄養成分を入力してください。よみがなを入れておくと、「食材を選ぶ」の五十音検索でも見つけやすくなります。</p>
                   <button className="add-btn" onClick={saveCustomIngredient}>＋ この材料をリストに追加</button>
                 </div>
               )}
@@ -1095,7 +1111,7 @@ function App() {
                     <div className="entry-row" key={ing.id}>
                       <div style={{ flex: 1 }}>
                         <div className="entry-name">{ing.name}</div>
-                        <div className="entry-macro">{ing.unitType === "piece" ? "1個あたり" : "100gあたり"} {ing.kcal}kcal ／ P{ing.protein}g ・ F{ing.fat}g ・ C{ing.carb}g</div>
+                        <div className="entry-macro">{unitLongLabel(ing.unitType)} {ing.kcal}kcal ／ P{ing.protein}g ・ F{ing.fat}g ・ C{ing.carb}g</div>
                       </div>
                       <button className="tab-btn" onClick={() => restoreBuiltinIngredient(ing.id)}>元に戻す</button>
                     </div>
